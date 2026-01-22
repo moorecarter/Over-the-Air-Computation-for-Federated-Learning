@@ -78,7 +78,7 @@ blocks:
     start: '0'
     step: '1000'
     stop: '1000000'
-    value: '32000'
+    value: '100000'
     widget: counter_slider
   states:
     bus_sink: false
@@ -105,7 +105,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [280, 16.0]
+    coordinate: [296, 16.0]
     rotation: 0
     state: disabled
 - name: analog_const_source_x_0
@@ -260,7 +260,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 80.0]
+    coordinate: [856, 80.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -357,7 +357,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 408.0]
+    coordinate: [856, 400.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_sink_0
@@ -397,7 +397,7 @@ blocks:
     ant7: '"TX/RX"'
     ant8: '"TX/RX"'
     ant9: '"TX/RX"'
-    bw0: 1e6
+    bw0: samp_rate
     bw1: '0'
     bw10: '0'
     bw11: '0'
@@ -473,7 +473,7 @@ blocks:
     comment: ''
     dev_addr: '"addr=192.168.10.2"'
     dev_args: ''
-    gain0: '2'
+    gain0: '10'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -620,7 +620,7 @@ blocks:
     start_time: '-1.0'
     stream_args: ''
     stream_chans: '[]'
-    sync: sync
+    sync: pc_clock_next_pps
     time_source0: ''
     time_source1: ''
     time_source2: ''
@@ -634,9 +634,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [832, 196.0]
+    coordinate: [856, 196.0]
     rotation: 0
-    state: disabled
+    state: enabled
 
 connections:
 - [analog_const_source_x_0, '0', blocks_multiply_xx_0, '0']

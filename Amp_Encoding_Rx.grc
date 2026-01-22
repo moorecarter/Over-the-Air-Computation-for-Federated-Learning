@@ -45,18 +45,6 @@ blocks:
     coordinate: [200, 12]
     rotation: 0
     state: enabled
-- name: symb_rate
-  id: variable
-  parameters:
-    comment: ''
-    value: '1000'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [296, 8.0]
-    rotation: 0
-    state: enabled
 - name: analog_sig_source_x_0
   id: analog_sig_source_x
   parameters:
@@ -100,9 +88,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [120, 352.0]
+    coordinate: [112, 352.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_complex_to_float_0
   id: blocks_complex_to_float
   parameters:
@@ -176,7 +164,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 176.0]
+    coordinate: [688, 152.0]
     rotation: 0
     state: disabled
 - name: qtgui_number_sink_0
@@ -239,7 +227,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [792, 432.0]
+    coordinate: [888, 168.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -376,7 +364,7 @@ blocks:
     ant7: '"RX2"'
     ant8: '"RX2"'
     ant9: '"RX2"'
-    bw0: 1e6
+    bw0: samp_rate
     bw1: '0'
     bw10: '0'
     bw11: '0'
@@ -516,7 +504,7 @@ blocks:
     dc_offs_enb9: default
     dev_addr: '"addr=192.168.10.2"'
     dev_args: ''
-    gain0: '30'
+    gain0: '20'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -758,7 +746,7 @@ blocks:
     start_time: '-1.0'
     stream_args: ''
     stream_chans: '[]'
-    sync: sync
+    sync: pc_clock
     time_source0: ''
     time_source1: ''
     time_source2: ''
@@ -774,13 +762,14 @@ blocks:
     bus_structure: null
     coordinate: [112, 124.0]
     rotation: 0
-    state: disabled
+    state: enabled
 
 connections:
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '1']
 - [analog_sig_source_x_1, '0', blocks_complex_to_float_0, '0']
 - [analog_sig_source_x_1, '0', qtgui_time_sink_x_0, '0']
 - [blocks_complex_to_float_0, '0', blocks_multiply_xx_0, '0']
+- [blocks_complex_to_float_0, '0', low_pass_filter_0, '0']
 - [blocks_complex_to_float_0, '0', qtgui_number_sink_0, '0']
 - [low_pass_filter_0, '0', blocks_multiply_const_vxx_0, '0']
 - [uhd_usrp_source_0, '0', blocks_complex_to_float_0, '0']
