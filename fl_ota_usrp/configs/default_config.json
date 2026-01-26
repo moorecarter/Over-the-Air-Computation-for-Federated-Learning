@@ -1,0 +1,23 @@
+{
+    "usrp_params": {
+        "fc": 2.45e9,
+        "fs": 1e6,
+        "rx_gain": 30,
+        "rx_ant": "RX2",
+        "rx_chan": 0,
+        "tx_gain": 15,
+        "tx_ant": "TX/RX",
+        "tx_chan": 0
+    },
+    "fl_params": {
+        "num_clients": 3,
+        "num_rounds": 10,
+        "local_epochs": 5,
+        "batch_size": 32,
+        "lr": 0.01
+    },
+    "ota_params": {
+        "amplitude": 0.2,
+        "sps": 100
+    }
+}

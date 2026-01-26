@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Experiment outputs (large files)
+outputs/
+logs/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# MedMNIST dataset cache
+*.npz
+.medmnist/
+
+# Ray/Flower temp files
+/tmp/ray/
+ray_results/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Claude
+.claude/
