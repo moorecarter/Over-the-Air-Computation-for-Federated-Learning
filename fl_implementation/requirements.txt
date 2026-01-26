@@ -1,0 +1,15 @@
+# Federated Learning
+flwr[simulation]>=1.5.0
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+timm>=0.9.0
+
+# Medical Imaging Dataset
+medmnist>=3.0.0
+
+# Utilities
+numpy>=1.24.0
+pillow>=9.0.0
+tqdm>=4.65.0
