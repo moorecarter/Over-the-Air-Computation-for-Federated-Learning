@@ -44,8 +44,8 @@ blocks:
     rangeType: float
     start: '0'
     step: '1'
-    stop: '1000'
-    value: '20'
+    stop: '1'
+    value: '0.5'
     widget: counter_slider
   states:
     bus_sink: false
@@ -122,7 +122,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [184, 224.0]
+    coordinate: [248, 240.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0
@@ -145,7 +145,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [184, 320.0]
+    coordinate: [248, 328.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_complex_0
@@ -260,7 +260,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [856, 80.0]
+    coordinate: [856, 120.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_0
@@ -357,7 +357,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [856, 400.0]
+    coordinate: [856, 408.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_sink_0
@@ -620,7 +620,7 @@ blocks:
     start_time: '-1.0'
     stream_args: ''
     stream_chans: '[]'
-    sync: pc_clock_next_pps
+    sync: none
     time_source0: ''
     time_source1: ''
     time_source2: ''
@@ -634,9 +634,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [856, 196.0]
+    coordinate: [856, 220.0]
     rotation: 0
-    state: enabled
+    state: disabled
 
 connections:
 - [analog_const_source_x_0, '0', blocks_multiply_xx_0, '0']
