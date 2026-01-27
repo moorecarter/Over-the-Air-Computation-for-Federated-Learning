@@ -33,7 +33,7 @@ if __name__ == "__main__":
         arg = -1j * (np.pi * args.u * n * (n + cf + 2 * args.q)) / args.N
         x = np.exp(arg).astype(np.complex64)
         print(f"Zadoff Chu Sequence: {x}")
-        x.tofile("zc_seq.bin")
+        x.tofile(f"zc_seq_N{args.N}_u{args.u}_q{args.q}.bin")
         exit(0)
     except Exception as e:
         print(f"ERROR: {e}")

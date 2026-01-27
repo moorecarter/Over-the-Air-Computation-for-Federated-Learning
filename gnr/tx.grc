@@ -1,12 +1,12 @@
 options:
   parameters:
-    author: ''
+    author: Carter Moore
     catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
     comment: ''
     copyright: ''
-    description: ''
+    description: Transmitter for channel state estimation test
     gen_cmake: 'On'
     gen_linking: dynamic
     generate_options: qt_gui
@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: Not titled yet
+    title: Transmitter_CSI
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -45,7 +45,7 @@ blocks:
     coordinate: [328, 8.0]
     rotation: 0
     state: enabled
-- name: samp_rate
+- name: lo_offset
   id: variable
   parameters:
     comment: ''
@@ -54,7 +54,53 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
+    coordinate: [632, 8.0]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: 10e6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
     coordinate: [200, 12]
+    rotation: 0
+    state: enabled
+- name: target_freq
+  id: variable
+  parameters:
+    comment: ''
+    value: 2.45e9
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [488, 8.0]
+    rotation: 0
+    state: enabled
+- name: blocks_file_source_0
+  id: blocks_file_source
+  parameters:
+    affinity: ''
+    alias: Zadoff_Chu
+    begin_tag: pmt.PMT_NIL
+    comment: ''
+    file: /home/moore/Documents/School/capstone/Over-the-Air-Computation-for-Federated-Learning/Utils/zc_seq.bin
+    length: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    repeat: 'True'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [448, 200.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0
@@ -73,26 +119,6 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [904, 232.0]
-    rotation: 0
-    state: enabled
-- name: blocks_vector_source_x_0
-  id: blocks_vector_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    repeat: 'True'
-    tags: '[]'
-    type: complex
-    vector: '[1+0j, -1+0j, 0.5+0j, -0.5+0j]'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [192, 216.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0
@@ -402,7 +428,7 @@ blocks:
     ant7: '"TX/RX"'
     ant8: '"TX/RX"'
     ant9: '"TX/RX"'
-    bw0: 1e6
+    bw0: samp_rate
     bw1: '0'
     bw10: '0'
     bw11: '0'
@@ -434,7 +460,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: 2.45e9
+    center_freq0: uhd.tune_request(target_freq, lo_offset)
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -611,7 +637,7 @@ blocks:
     minoutbuf: '0'
     nchan: '1'
     num_mboards: '1'
-    otw: ''
+    otw: sc16
     samp_rate: samp_rate
     sd_spec0: B:0
     sd_spec1: ''
@@ -639,16 +665,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1288, 140.0]
+    coordinate: [1288, 116.0]
     rotation: 0
     state: enabled
 
 connections:
+- [blocks_file_source_0, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_multiply_const_vxx_0, '0', qtgui_const_sink_x_0, '0']
 - [blocks_multiply_const_vxx_0, '0', qtgui_freq_sink_x_0, '0']
 - [blocks_multiply_const_vxx_0, '0', qtgui_time_sink_x_0, '0']
 - [blocks_multiply_const_vxx_0, '0', uhd_usrp_sink_0, '0']
-- [blocks_vector_source_x_0, '0', blocks_multiply_const_vxx_0, '0']
 
 metadata:
   file_format: 1
