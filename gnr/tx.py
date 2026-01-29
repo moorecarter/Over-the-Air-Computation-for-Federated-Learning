@@ -65,7 +65,7 @@ class tx(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.target_freq = target_freq = 2.45e9
-        self.samp_rate = samp_rate = 10e6
+        self.samp_rate = samp_rate = 1e6
         self.lo_offset = lo_offset = 1e6
         self.interpolation = interpolation = 8
 
@@ -74,7 +74,7 @@ class tx(gr.top_block, Qt.QWidget):
         ##################################################
 
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
-            ",".join(("addr=192.168.10.2", '')),
+            ",".join(("addr=192.168.110.2", '')),
             uhd.stream_args(
                 cpu_format="fc32",
                 otw_format="sc16",
@@ -105,7 +105,7 @@ class tx(gr.top_block, Qt.QWidget):
         self.qtgui_time_sink_x_0.set_y_label('Amplitude', "")
 
         self.qtgui_time_sink_x_0.enable_tags(True)
-        self.qtgui_time_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_TAG, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "packet_len")
+        self.qtgui_time_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "packet_len")
         self.qtgui_time_sink_x_0.enable_autoscale(False)
         self.qtgui_time_sink_x_0.enable_grid(False)
         self.qtgui_time_sink_x_0.enable_axis_labels(True)
@@ -227,7 +227,7 @@ class tx(gr.top_block, Qt.QWidget):
         self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(1)
-        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/home/moore/Documents/School/capstone/Over-the-Air-Computation-for-Federated-Learning/Utils/zc_seq.bin', True, 0, 0)
+        self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, '/home/moore/Documents/School/capstone/Over-the-Air-Computation-for-Federated-Learning/Utils/zc_seq_N1023_u25_q0.bin', True, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_file_source_0.set_block_alias("Zadoff_Chu")
 

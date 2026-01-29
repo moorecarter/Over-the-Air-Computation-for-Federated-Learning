@@ -61,7 +61,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 10e6
+    value: 1e6
   states:
     bus_sink: false
     bus_source: false
@@ -88,7 +88,7 @@ blocks:
     alias: Zadoff_Chu
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: /home/moore/Documents/School/capstone/Over-the-Air-Computation-for-Federated-Learning/Utils/zc_seq.bin
+    file: /home/moore/Documents/School/capstone/Over-the-Air-Computation-for-Federated-Learning/Utils/zc_seq_N1023_u25_q0.bin
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -100,7 +100,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [448, 200.0]
+    coordinate: [456, 200.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0
@@ -118,7 +118,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [904, 232.0]
+    coordinate: [840, 232.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0
@@ -365,7 +365,7 @@ blocks:
     tr_chan: '0'
     tr_delay: '0'
     tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_TAG
+    tr_mode: qtgui.TRIG_MODE_FREE
     tr_slope: qtgui.TRIG_SLOPE_POS
     tr_tag: '"packet_len"'
     type: complex
@@ -502,7 +502,7 @@ blocks:
     clock_source6: ''
     clock_source7: ''
     comment: ''
-    dev_addr: '"addr=192.168.10.2"'
+    dev_addr: '"addr=192.168.110.2"'
     dev_args: ''
     gain0: '20'
     gain1: '0'
