@@ -1,0 +1,124 @@
+What Running main.py Does
+=========================
+
+Overview
+--------
+main.py runs a federated learning simulation that trains a medical image
+classifier (MedViTV2) on the BloodMNIST blood cell dataset, using the Flower
+framework with simulated Over-the-Air (OTA) aggregation.
+
+
+Step-by-Step Execution
+----------------------
+
+1. Parse Command-Line Arguments
+   Reads configuration from the command line (or uses defaults):
+   - Model variant (medvit_tiny/small/base), image size
+   - Number of federated clients (default 3), training rounds (default 5)
+   - Local epochs, batch size, learning rate
+   - Data partition strategy (iid, non_iid, pathological)
+   - OTA channel condition (ideal, good, moderate, challenging, harsh)
+   - Device selection (auto/cpu/cuda/mps), output directory, random seed
+
+2. Setup and Configuration
+   - Generates an experiment name with a timestamp
+   - Creates an output directory (outputs/<experiment_name>/)
+   - Saves the full configuration to config.json
+
+3. Create the Model
+   - Instantiates a MedViTV2 vision transformer with KAN (Kolmogorov-Arnold
+     Network) layers and dilated attention
+   - Prints the parameter count (e.g. ~11.4M for medvit_tiny)
+   - Immediately deletes the model to free memory (it will be recreated per
+     client and on the server)
+
+4. Prepare the Federated Dataset
+   - Downloads BloodMNIST (8-class blood cell classification, ~17K images)
+   - Splits data into train/val/test sets
+   - Partitions the training set across clients using the chosen strategy:
+     * IID: random equal-size splits
+     * Non-IID: Dirichlet-distributed class imbalance (controlled by alpha)
+     * Pathological: each client only sees 2 classes
+   - Applies data augmentation (random flips, rotation, color jitter) for
+     training and ImageNet normalization for all splits
+
+5. Create the Client Function
+   - Builds a factory function that, given a client ID, creates a MedViTClient
+   - Each client holds its own model copy, local data partition, optimizer
+     (AdamW), and loss function (CrossEntropyLoss)
+
+6. Create the Server Strategy (FedAvgOTA)
+   - Initializes global model parameters on the server
+   - Sets up the OTA channel model based on the chosen preset:
+     * ideal: SNR=100dB, no fading, no sync error, no power imbalance
+     * good: SNR=30dB, minor sync error
+     * moderate: SNR=20dB, Rician fading, some sync error and power imbalance
+     * challenging: SNR=15dB, Rayleigh fading, noticeable impairments
+     * harsh: SNR=10dB, Rayleigh fading, severe impairments
+   - Creates a server-side evaluation function that tests the global model on
+     the held-out test set after each round
+   - Configures per-round learning rate decay (0.99x per round)
+
+7. Run the Flower Simulation (Training Loop)
+   - Initializes Ray for parallel client simulation
+   - Runs for the specified number of rounds. Each round:
+     a. Server sends current global parameters to all clients
+     b. Each client:
+        - Loads the global parameters
+        - Trains locally for the configured epochs on its partition
+        - Computes weight deltas (updated_weights - received_weights)
+        - Reports delta statistics (norm, mean, std) and per-layer values
+        - Returns the deltas, sample count, and metrics to the server
+     c. Server aggregates deltas through the OTA channel simulation:
+        - Applies fading coefficients (Rayleigh/Rician/none) per client
+        - Applies phase synchronization errors
+        - Applies power imbalance scaling
+        - Computes weighted sum of client deltas with channel effects
+        - Adds AWGN noise based on configured SNR
+        - Adds the aggregated delta to the global model parameters
+     d. Server evaluates the updated global model on the test set and prints
+        the global accuracy
+   - Filters and cleans Ray/Flower log output during simulation
+
+8. Save and Report Results
+   - Saves training history to results.json, including:
+     * Distributed and centralized losses per round
+     * Distributed and centralized metrics (accuracy) per round
+     * Per-client training metrics (accuracy, loss, gradient statistics)
+   - Prints a final summary showing accuracy improvement from round 0 to the
+     last round (e.g. "12.5% -> 85.3% (+72.8%)")
+   - Prints the path to the saved results file
+
+
+Key Concepts Demonstrated
+-------------------------
+- Federated Learning: multiple clients train locally, never sharing raw data
+- Over-the-Air Computation: model updates are aggregated through a simulated
+  wireless channel, modeling real-world signal impairments
+- Delta Transmission: clients send weight changes (not full weights), which is
+  what would actually be transmitted over the air in a real USRP deployment
+- MedViTV2 Architecture: a vision transformer enhanced with KAN layers for
+  learnable non-linear activations and dilated attention for multi-scale
+  feature capture, designed for medical image classification
+
+
+Example Usage
+-------------
+# Default: 3 clients, 5 rounds, iid, ideal channel
+python3 main.py
+
+# Non-IID data with moderate channel impairments
+python3 main.py --partition non_iid --alpha 0.3 --ota-channel moderate
+
+# More clients, more rounds, challenging channel
+python3 main.py --num-clients 10 --num-rounds 20 --ota-channel challenging
+
+# Use the small model at higher resolution
+python3 main.py --model medvit_small --img-size 224
+
+
+Output Files
+------------
+outputs/<experiment_name>/
+  config.json    - Full experiment configuration
+  results.json   - Training history (losses, accuracies, per-client metrics)
