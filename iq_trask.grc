@@ -123,7 +123,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [312, 88.0]
+    coordinate: [304, 88.0]
     rotation: 0
     state: enabled
 - name: reverse
@@ -162,23 +162,6 @@ blocks:
     coordinate: [296, 8.0]
     rotation: 0
     state: enabled
-- name: blocks_abs_xx_0
-  id: blocks_abs_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: float
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [968, 496.0]
-    rotation: 0
-    state: disabled
 - name: blocks_complex_to_float_0
   id: blocks_complex_to_float
   parameters:
@@ -192,24 +175,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [784, 656.0]
+    coordinate: [800, 720.0]
     rotation: 0
-    state: disabled
-- name: blocks_complex_to_float_2
-  id: blocks_complex_to_float
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [160, 808.0]
-    rotation: 180
     state: disabled
 - name: blocks_complex_to_mag_0
   id: blocks_complex_to_mag
@@ -224,27 +191,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [776, 576.0]
+    coordinate: [880, 576.0]
     rotation: 0
     state: enabled
-- name: blocks_divide_xx_0
-  id: blocks_divide_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [704, 856.0]
-    rotation: 180
-    state: disabled
 - name: blocks_moving_average_xx_0
   id: blocks_moving_average_xx
   parameters:
@@ -262,8 +211,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 864.0]
-    rotation: 180
+    coordinate: [704, 544.0]
+    rotation: 0
     state: disabled
 - name: blocks_throttle2_0
   id: blocks_throttle2
@@ -285,27 +234,6 @@ blocks:
     bus_structure: null
     coordinate: [200, 456.0]
     rotation: 0
-    state: disabled
-- name: blocks_throttle2_0_0
-  id: blocks_throttle2
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    ignoretag: 'True'
-    limit: auto
-    maximum: '0.1'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    samples_per_second: samp_rate
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [952, 848.0]
-    rotation: 180
     state: disabled
 - name: blocks_throttle2_1
   id: blocks_throttle2
@@ -345,29 +273,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [112, 256.0]
+    coordinate: [88, 224.0]
     rotation: 0
     state: enabled
-- name: blocks_vector_source_x_2_0
-  id: blocks_vector_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    repeat: 'True'
-    tags: '[]'
-    type: complex
-    vector: client_src
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1120, 840.0]
-    rotation: 180
-    state: disabled
 - name: channels_channel_model_0_0
   id: channels_channel_model
   parameters:
@@ -386,29 +294,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [592, 240.0]
+    coordinate: [544, 320.0]
     rotation: 0
-    state: disabled
-- name: channels_channel_model_0_0_0
-  id: channels_channel_model
-  parameters:
-    affinity: ''
-    alias: ''
-    block_tags: 'True'
-    comment: ''
-    epsilon: '1.0'
-    freq_offset: '0'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    noise_voltage: noise_voltage
-    seed: '0'
-    taps: channel_taps
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [512, 832.0]
-    rotation: 180
     state: disabled
 - name: epy_block_0_0
   id: epy_block
@@ -438,7 +325,7 @@ blocks:
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    threshold: '0.65'
+    threshold: '0.6'
   states:
     _io_cache: ('Channel State Estimator (H)', 'channel_state_estimator', [('threshold',
       '0.5'), ('alpha', '0.1')], [('0', 'complex', 1)], [('0', 'complex', 1)], '',
@@ -580,98 +467,6 @@ blocks:
     coordinate: [440, 640.0]
     rotation: 0
     state: enabled
-- name: qtgui_const_sink_x_0_0
-  id: qtgui_const_sink_x
-  parameters:
-    affinity: ''
-    alias: ''
-    alpha1: '1.0'
-    alpha10: '1.0'
-    alpha2: '1.0'
-    alpha3: '1.0'
-    alpha4: '1.0'
-    alpha5: '1.0'
-    alpha6: '1.0'
-    alpha7: '1.0'
-    alpha8: '1.0'
-    alpha9: '1.0'
-    autoscale: 'False'
-    axislabels: 'True'
-    color1: '"blue"'
-    color10: '"dark blue"'
-    color2: '"red"'
-    color3: '"green"'
-    color4: '"black"'
-    color5: '"cyan"'
-    color6: '"magenta"'
-    color7: '"yellow"'
-    color8: '"dark red"'
-    color9: '"dark green"'
-    comment: ''
-    grid: 'False'
-    gui_hint: ''
-    label1: ''
-    label10: ''
-    label2: ''
-    label3: ''
-    label4: ''
-    label5: ''
-    label6: ''
-    label7: ''
-    label8: ''
-    label9: ''
-    legend: 'True'
-    marker1: '0'
-    marker10: '0'
-    marker2: '0'
-    marker3: '0'
-    marker4: '0'
-    marker5: '0'
-    marker6: '0'
-    marker7: '0'
-    marker8: '0'
-    marker9: '0'
-    name: '"client_dest"'
-    nconnections: '1'
-    size: '1024'
-    style1: '0'
-    style10: '0'
-    style2: '0'
-    style3: '0'
-    style4: '0'
-    style5: '0'
-    style6: '0'
-    style7: '0'
-    style8: '0'
-    style9: '0'
-    tr_chan: '0'
-    tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_FREE
-    tr_slope: qtgui.TRIG_SLOPE_POS
-    tr_tag: '""'
-    type: complex
-    update_time: '0.10'
-    width1: '1'
-    width10: '1'
-    width2: '1'
-    width3: '1'
-    width4: '1'
-    width5: '1'
-    width6: '1'
-    width7: '1'
-    width8: '1'
-    width9: '1'
-    xmax: '2'
-    xmin: '-2'
-    ymax: '2'
-    ymin: '-2'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [240, 1104.0]
-    rotation: 180
-    state: disabled
 - name: qtgui_freq_sink_x_0
   id: qtgui_freq_sink_x
   parameters:
@@ -894,71 +689,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1112, 600.0]
+    coordinate: [1104, 704.0]
     rotation: 0
-    state: disabled
-- name: qtgui_number_sink_1_0_0_0_0
-  id: qtgui_number_sink
-  parameters:
-    affinity: ''
-    alias: ''
-    autoscale: 'False'
-    avg: '0'
-    color1: ("black", "black")
-    color10: ("black", "black")
-    color2: ("black", "black")
-    color3: ("black", "black")
-    color4: ("black", "black")
-    color5: ("black", "black")
-    color6: ("black", "black")
-    color7: ("black", "black")
-    color8: ("black", "black")
-    color9: ("black", "black")
-    comment: ''
-    factor1: '1'
-    factor10: '1'
-    factor2: '1'
-    factor3: '1'
-    factor4: '1'
-    factor5: '1'
-    factor6: '1'
-    factor7: '1'
-    factor8: '1'
-    factor9: '1'
-    graph_type: qtgui.NUM_GRAPH_HORIZ
-    gui_hint: ''
-    label1: ''
-    label10: ''
-    label2: ''
-    label3: ''
-    label4: ''
-    label5: ''
-    label6: ''
-    label7: ''
-    label8: ''
-    label9: ''
-    max: '1'
-    min: '-1'
-    name: '"client_dest_data"'
-    nconnections: '1'
-    type: float
-    unit1: ''
-    unit10: ''
-    unit2: ''
-    unit3: ''
-    unit4: ''
-    unit5: ''
-    unit6: ''
-    unit7: ''
-    unit8: ''
-    unit9: ''
-    update_time: '0.10'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [32, 944.0]
-    rotation: 180
     state: disabled
 - name: qtgui_number_sink_1_0_1
   id: qtgui_number_sink
@@ -1020,7 +752,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1120, 472.0]
+    coordinate: [1104, 536.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_2
@@ -1214,7 +946,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [880, 360.0]
+    coordinate: [824, 328.0]
     rotation: 0
     state: disabled
 - name: qtgui_time_sink_x_2_1
@@ -1314,200 +1046,6 @@ blocks:
     coordinate: [440, 736.0]
     rotation: 0
     state: enabled
-- name: qtgui_time_sink_x_3_0
-  id: qtgui_time_sink_x
-  parameters:
-    affinity: ''
-    alias: ''
-    alpha1: '1.0'
-    alpha10: '1.0'
-    alpha2: '1.0'
-    alpha3: '1.0'
-    alpha4: '1.0'
-    alpha5: '1.0'
-    alpha6: '1.0'
-    alpha7: '1.0'
-    alpha8: '1.0'
-    alpha9: '1.0'
-    autoscale: 'False'
-    axislabels: 'True'
-    color1: blue
-    color10: dark blue
-    color2: red
-    color3: green
-    color4: black
-    color5: cyan
-    color6: magenta
-    color7: yellow
-    color8: dark red
-    color9: dark green
-    comment: ''
-    ctrlpanel: 'False'
-    entags: 'True'
-    grid: 'False'
-    gui_hint: ''
-    label1: Signal 1
-    label10: Signal 10
-    label2: Signal 2
-    label3: Signal 3
-    label4: Signal 4
-    label5: Signal 5
-    label6: Signal 6
-    label7: Signal 7
-    label8: Signal 8
-    label9: Signal 9
-    legend: 'True'
-    marker1: '-1'
-    marker10: '-1'
-    marker2: '-1'
-    marker3: '-1'
-    marker4: '-1'
-    marker5: '-1'
-    marker6: '-1'
-    marker7: '-1'
-    marker8: '-1'
-    marker9: '-1'
-    name: '"Client_dest"'
-    nconnections: '1'
-    size: '1024'
-    srate: samp_rate
-    stemplot: 'False'
-    style1: '1'
-    style10: '1'
-    style2: '1'
-    style3: '1'
-    style4: '1'
-    style5: '1'
-    style6: '1'
-    style7: '1'
-    style8: '1'
-    style9: '1'
-    tr_chan: '0'
-    tr_delay: '0'
-    tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_FREE
-    tr_slope: qtgui.TRIG_SLOPE_POS
-    tr_tag: '""'
-    type: complex
-    update_time: '0.10'
-    width1: '1'
-    width10: '1'
-    width2: '1'
-    width3: '1'
-    width4: '1'
-    width5: '1'
-    width6: '1'
-    width7: '1'
-    width8: '1'
-    width9: '1'
-    ylabel: Amplitude
-    ymax: '1'
-    ymin: '-1'
-    yunit: '""'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [240, 992.0]
-    rotation: 180
-    state: disabled
-- name: qtgui_time_sink_x_3_0_0
-  id: qtgui_time_sink_x
-  parameters:
-    affinity: ''
-    alias: ''
-    alpha1: '1.0'
-    alpha10: '1.0'
-    alpha2: '1.0'
-    alpha3: '1.0'
-    alpha4: '1.0'
-    alpha5: '1.0'
-    alpha6: '1.0'
-    alpha7: '1.0'
-    alpha8: '1.0'
-    alpha9: '1.0'
-    autoscale: 'False'
-    axislabels: 'True'
-    color1: blue
-    color10: dark blue
-    color2: red
-    color3: green
-    color4: black
-    color5: cyan
-    color6: magenta
-    color7: yellow
-    color8: dark red
-    color9: dark green
-    comment: ''
-    ctrlpanel: 'False'
-    entags: 'True'
-    grid: 'False'
-    gui_hint: ''
-    label1: Signal 1
-    label10: Signal 10
-    label2: Signal 2
-    label3: Signal 3
-    label4: Signal 4
-    label5: Signal 5
-    label6: Signal 6
-    label7: Signal 7
-    label8: Signal 8
-    label9: Signal 9
-    legend: 'True'
-    marker1: '-1'
-    marker10: '-1'
-    marker2: '-1'
-    marker3: '-1'
-    marker4: '-1'
-    marker5: '-1'
-    marker6: '-1'
-    marker7: '-1'
-    marker8: '-1'
-    marker9: '-1'
-    name: '"Client_src"'
-    nconnections: '1'
-    size: '1024'
-    srate: samp_rate
-    stemplot: 'False'
-    style1: '1'
-    style10: '1'
-    style2: '1'
-    style3: '1'
-    style4: '1'
-    style5: '1'
-    style6: '1'
-    style7: '1'
-    style8: '1'
-    style9: '1'
-    tr_chan: '0'
-    tr_delay: '0'
-    tr_level: '0.0'
-    tr_mode: qtgui.TRIG_MODE_FREE
-    tr_slope: qtgui.TRIG_SLOPE_POS
-    tr_tag: '""'
-    type: complex
-    update_time: '0.10'
-    width1: '1'
-    width10: '1'
-    width2: '1'
-    width3: '1'
-    width4: '1'
-    width5: '1'
-    width6: '1'
-    width7: '1'
-    width8: '1'
-    width9: '1'
-    ylabel: Amplitude
-    ymax: '1'
-    ymin: '-1'
-    yunit: '""'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [704, 1008.0]
-    rotation: 180
-    state: disabled
 - name: uhd_usrp_sink_0
   id: uhd_usrp_sink
   parameters:
@@ -1610,7 +1148,7 @@ blocks:
     center_freq8: '0'
     center_freq9: '0'
     clock_rate: 0e0
-    clock_source0: ''
+    clock_source0: internal
     clock_source1: ''
     clock_source2: ''
     clock_source3: ''
@@ -1782,7 +1320,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [368, 244.0]
+    coordinate: [328, 180.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_source_0
@@ -1887,7 +1425,7 @@ blocks:
     center_freq8: '0'
     center_freq9: '0'
     clock_rate: 0e0
-    clock_source0: internal
+    clock_source0: external
     clock_source1: ''
     clock_source2: ''
     clock_source3: ''
@@ -2205,7 +1743,7 @@ blocks:
     stream_args: ''
     stream_chans: '[]'
     sync: sync
-    time_source0: ''
+    time_source0: external
     time_source1: ''
     time_source2: ''
     time_source3: ''
@@ -2231,7 +1769,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [880, 192.0]
+    coordinate: [824, 272.0]
     rotation: 0
     state: disabled
 - name: virtual_source_0
@@ -2249,34 +1787,24 @@ blocks:
     state: disabled
 
 connections:
-- [blocks_abs_xx_0, '0', qtgui_number_sink_1_0_1, '0']
-- [blocks_complex_to_float_0, '0', blocks_abs_xx_0, '0']
 - [blocks_complex_to_float_0, '0', qtgui_number_sink_1_0_1, '0']
 - [blocks_complex_to_float_0, '1', qtgui_number_sink_1_0_0_0, '0']
-- [blocks_complex_to_float_2, '0', qtgui_number_sink_1_0_0_0_0, '0']
 - [blocks_complex_to_mag_0, '0', qtgui_number_sink_1_0_1, '0']
-- [blocks_divide_xx_0, '0', channels_channel_model_0_0_0, '0']
-- [blocks_moving_average_xx_0, '0', blocks_complex_to_float_2, '0']
+- [blocks_moving_average_xx_0, '0', blocks_complex_to_mag_0, '0']
 - [blocks_throttle2_0, '0', epy_block_0_0, '0']
 - [blocks_throttle2_0, '0', qtgui_const_sink_x_0, '0']
 - [blocks_throttle2_0, '0', qtgui_freq_sink_x_0_0, '0']
-- [blocks_throttle2_0_0, '0', blocks_divide_xx_0, '0']
-- [blocks_throttle2_0_0, '0', qtgui_time_sink_x_3_0_0, '0']
 - [blocks_throttle2_1, '0', channels_channel_model_0_0, '0']
 - [blocks_throttle2_1, '0', uhd_usrp_sink_0, '0']
 - [blocks_vector_source_x_2, '0', blocks_throttle2_1, '0']
 - [blocks_vector_source_x_2, '0', qtgui_freq_sink_x_0, '0']
 - [blocks_vector_source_x_2, '0', qtgui_time_sink_x_2, '0']
 - [blocks_vector_source_x_2, '0', uhd_usrp_sink_0, '0']
-- [blocks_vector_source_x_2_0, '0', blocks_throttle2_0_0, '0']
 - [channels_channel_model_0_0, '0', qtgui_time_sink_x_2_0, '0']
 - [channels_channel_model_0_0, '0', virtual_sink_0, '0']
-- [channels_channel_model_0_0_0, '0', blocks_moving_average_xx_0, '0']
-- [channels_channel_model_0_0_0, '0', qtgui_const_sink_x_0_0, '0']
-- [channels_channel_model_0_0_0, '0', qtgui_time_sink_x_3_0, '0']
 - [epy_block_0_0, '0', blocks_complex_to_float_0, '0']
 - [epy_block_0_0, '0', blocks_complex_to_mag_0, '0']
-- [epy_block_0_0, '0', blocks_divide_xx_0, '1']
+- [epy_block_0_0, '0', blocks_moving_average_xx_0, '0']
 - [uhd_usrp_source_0, '0', epy_block_0_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_const_sink_x_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_freq_sink_x_0_0, '0']
