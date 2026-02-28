@@ -12,7 +12,10 @@ OTA conditions before deploying to actual USRP hardware.
 """
 
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Any
+
+# Channel state from estimation (e.g. real USRP pilots). Keys match OTAChannelModel.
+ChannelStateDict = Dict[str, np.ndarray]  # e.g. fading_coeffs, phase_errors, power_scales
 
 import flwr as fl
 from flwr.common import (
@@ -206,6 +209,8 @@ class FedAvgOTA(FedAvg):
         sync_error_std: float = 0.0,
         power_imbalance_db: float = 0.0,
         channel_seed: Optional[int] = None,
+        # Real USRP channel estimation (run once at start of each round)
+        channel_estimate_callback: Optional[callable] = None,
         # USRP integration
         usrp_callback: Optional[callable] = None,  # Custom transmission function
         # Standard FedAvg parameters
@@ -230,8 +235,15 @@ class FedAvgOTA(FedAvg):
             sync_error_std: Phase synchronization error std (radians)
             power_imbalance_db: Max power imbalance between clients
             channel_seed: Random seed for channel simulation
+            channel_estimate_callback: Optional. For real USRP channel estimation.
+                Signature: (num_clients, server_round) -> ChannelStateDict | None.
+                Called once at the start of each round. Run your pilot phase here
+                (e.g. receive pilots on host USRP), estimate per-client channel,
+                return dict with keys e.g. "fading_coeffs", "phase_errors", "power_scales"
+                (each np.ndarray length num_clients). Returned state is passed to
+                usrp_callback as channel_state for pre-coding/equalization.
             usrp_callback: Optional callback for USRP transmission.
-                           Signature: callback(client_deltas, weights) -> aggregated_delta
+                           Signature: callback(client_deltas, weights, ...) -> aggregated_delta
                            If None, uses simulated OTA channel.
 
             (Other args are standard FedAvg parameters)
@@ -260,6 +272,8 @@ class FedAvgOTA(FedAvg):
             seed=channel_seed,
         )
 
+        # Real USRP channel estimation: (num_clients, server_round) -> ChannelStateDict | None
+        self.channel_estimate_callback = channel_estimate_callback
         # USRP callback for real OTA transmission
         self.usrp_callback = usrp_callback
 
@@ -303,6 +317,15 @@ class FedAvgOTA(FedAvg):
         num_examples_total = sum([n for _, n, _ in client_results])
         weights = [n / num_examples_total for _, n, _ in client_results]
 
+        num_clients = len(client_results)
+
+        # --- Channel estimation (real USRP): run once per round before aggregation ---
+        # Implement channel_estimate_callback to run pilots on your USRP and return
+        # a dict with keys e.g. "fading_coeffs", "phase_errors", "power_scales" (length num_clients).
+        channel_state: Optional[ChannelStateDict] = None
+        if self.channel_estimate_callback is not None:
+            channel_state = self.channel_estimate_callback(num_clients, server_round)
+
         # Aggregate each parameter array separately
         aggregated_ndarrays = []
         num_params = len(client_results[0][0])
@@ -317,13 +340,16 @@ class FedAvgOTA(FedAvg):
             # weights: importance of each client (by sample count)
 
             if self.usrp_callback is not None:
-                # Use real USRP for OTA aggregation
-                aggregated_delta = self.usrp_callback(
+                # Use real USRP for OTA aggregation (pass channel_state for pre-coding if available)
+                kwargs: Dict[str, Any] = dict(
                     client_deltas=client_deltas,
                     weights=weights,
                     param_idx=param_idx,
                     server_round=server_round,
                 )
+                if channel_state is not None:
+                    kwargs["channel_state"] = channel_state
+                aggregated_delta = self.usrp_callback(**kwargs)
             else:
                 # Use simulated OTA channel
                 aggregated_delta = self.channel.aggregate_with_channel(
