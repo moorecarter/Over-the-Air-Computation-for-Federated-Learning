@@ -1,0 +1,156 @@
+from .usrp_x310 import USRP_X310
+import numpy as np
+import threading
+import time
+from typing import List
+import math
+import uhd.libpyuhd.types
+def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
+            
+    if(math.gcd(N, u) != 1):
+        raise Exception("Please choose N and u such that they are coprime.")
+    
+    n = np.arange(N)
+    cf = N % 2
+    arg = -1j * (np.pi * u * n * (n + cf + 2 * q)) / N
+    x = np.exp(arg).astype(np.complex64)
+    return x
+
+KNOWN_PILOT = _generate_zadoff_chu(N=256, u=1, q=0)
+N_ZC = len(KNOWN_PILOT) 
+
+_usrp_cache = {}
+def _get_usrp(ip_addr: str) -> USRP_X310:
+    if ip_addr not in _usrp_cache:
+        _usrp_cache[ip_addr] = USRP_X310(ip_addr=ip_addr)
+    return _usrp_cache[ip_addr]
+    
+#NEED TO LOOK THIS IMPL OVER 
+def init_all_usrps(server_addr: str, client_addrs: List[str]):
+    """Call once at startup before any rounds."""
+    all_usrps = [_get_usrp(server_addr)] + [_get_usrp(addr) for addr in client_addrs]
+    # ============================    CHANGE TO EXTERNAL WHEN OCTOCLOCK ADDED   ============================
+    for u in all_usrps:
+        u.set_clk(clk_source={"internal" if u.usrp.addr == server_addr else "external"}, time_source={"internal" if u.usrp.addr == server_addr else "external"})
+
+    # Wait for PPS edge, set time to 0 on all at the next PPS
+    time.sleep(1.1) 
+    for u in all_usrps:
+        u.usrp.set_time_next_pps(uhd.types.TimeSpec(0.0))
+
+    # Wait for that PPS
+    time.sleep(1.1)
+    # USRPS have T=0 
+
+def usrp_channel_estimation(
+    num_clients: int,
+    server_round: int,
+    server_usrp_addr: str,
+    client_usrp_addr: List[str],
+):
+    print("Starting USRP channel estimation...")
+    fading_coeffs = np.zeros(num_clients)
+    phase_errors = np.zeros(num_clients)
+    power_scales = np.zeros(num_clients)
+
+    server_usrp = _get_usrp(server_usrp_addr)
+    if not server_usrp.rx_channels:
+        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+    rx_symbols = None
+
+    def rx_thread_fn():
+        nonlocal rx_symbols
+        # Capture a wide window to ensure we catch the jittery packet
+        rx_symbols = server_usrp.rx_pilot(num_samps=256 + 2000)
+
+    for client_idx in range(num_clients):
+        client_usrp = _get_usrp(client_usrp_addr[client_idx])
+        if not client_usrp.tx_channels:
+            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+        rx_thread = threading.Thread(target=rx_thread_fn)
+        rx_thread.start()
+        
+        # Note: For production-level test engineering, replace time.sleep 
+        # with UHD synchronized time tags (set_time_next_pps).
+        time.sleep(0.05) 
+        
+        # Ensure your tx_pilot method is sending the KNOWN_PILOT array
+        pilot = client_usrp.tx_pilot(amplitude=1.0, pilot=KNOWN_PILOT) 
+        time.sleep(0.05)
+        rx_thread.join()
+
+        if rx_symbols is not None and len(rx_symbols) >= N_ZC:
+            # 2. Perform cross-correlation across the ENTIRE received window.
+            # We use a sliding window approach (valid convolution) because the 
+            # sleep() timing jitter means the pilot could be anywhere in rx_symbols.
+            
+            # Using standard convolution for matched filtering
+            cross_corr = np.correlate(rx_symbols, KNOWN_PILOT, mode='valid')
+            
+            # Find the peak which indicates where the sequence starts and the channel tap
+            peak_idx = np.argmax(np.abs(cross_corr))
+            peak_val = cross_corr[peak_idx]
+            
+            # 3. Extract metrics from the peak
+            fading_coeffs[client_idx] = np.abs(peak_val)
+            phase_errors[client_idx] = np.angle(peak_val)
+            
+            # Power scale: divide by the energy of the transmitted pilot
+            pilot_energy = np.sum(np.abs(KNOWN_PILOT)**2)
+            power_scales[client_idx] = np.abs(peak_val) / (pilot_energy + 1e-12)
+            
+            print(f"Client {client_idx} - Peak at sample {peak_idx}, Phase: {phase_errors[client_idx]:.2f} rad")
+        else:
+            print(f"Error: Did not receive enough samples from client {client_idx}")
+
+    return {"fading_coeffs": fading_coeffs, "phase_errors": phase_errors, "power_scales": power_scales}
+
+
+def create_usrp_channel_estimate_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
+    """Strategy only calls (num_clients, server_round); this binds addresses."""
+    return lambda num_clients, server_round: usrp_channel_estimation(
+        num_clients, server_round, server_usrp_addr, client_usrp_addr
+    )
+
+def usrp_transmit_and_receive(
+    num_clients: int,
+    server_round: int,
+    server_usrp_addr: str,
+    client_usrp_addr: List[str],
+    client_signals: List[np.ndarray],
+):
+    server_usrp = _get_usrp(server_usrp_addr)
+    if not server_usrp.rx_channels:
+        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+    client_usrps = [_get_usrp(addr) for addr in client_usrp_addr]
+    for client_usrp in client_usrps:
+        if not client_usrp.tx_channels:
+            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+    
+    start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.TimeSpec(0.5)
+    rx_symbols = None
+    def rx_thread_fn():
+        nonlocal rx_symbols
+        rx_symbols = server_usrp.rx_pilot(num_samps=len(client_signals[0]) + 1000, start_time=start_time)
+    def tx_thread_fn(client_idx: int):
+        client_usrps[client_idx].tx_signal(waveform=client_signals[client_idx], repeat=False, start_time=start_time)
+    
+    print("Starting USRP transmit and receive...")
+
+    #Start RX and TX threads
+    rx_thread = threading.Thread(target=rx_thread_fn)
+    tx_threads = [threading.Thread(target=tx_thread_fn, args=(i,)) for i in range(num_clients)]
+    rx_thread.start()
+    for t in tx_threads:
+        t.start()
+    for t in tx_threads:
+        t.join()
+    rx_thread.join()
+
+    return rx_symbols
+
+def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
+    """Strategy only calls (num_clients, server_round); this binds addresses."""
+    return lambda num_clients, server_round, client_signals: usrp_transmit_and_receive(
+        num_clients, server_round, server_usrp_addr, client_usrp_addr, client_signals
+    )
