@@ -60,20 +60,23 @@ def usrp_channel_estimation(
         server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
     rx_symbols = None
 
+    rx_ready = threading.Event()
+
     def rx_thread_fn():
         nonlocal rx_symbols
+        rx_ready.set()  # Signal that RX is configured
         rx_symbols = server_usrp.rx_signal(num_samps=256 + 2000)
 
     for client_idx in range(num_clients):
         rx_symbols = None
+        rx_ready.clear()
         client_usrp = _get_usrp(client_usrp_addr[client_idx])
         if not client_usrp.tx_channels:
             client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
         rx_thread = threading.Thread(target=rx_thread_fn)
         rx_thread.start()
-        time.sleep(0.05)
+        rx_ready.wait()  # Wait for RX to be configured before transmitting
         client_usrp.tx_signal(waveform=KNOWN_PILOT_WAVEFORM, repeat=False)
-        time.sleep(0.05)
         rx_thread.join()
 
         if rx_symbols is not None and len(rx_symbols) >= N_ZC:
@@ -82,7 +85,7 @@ def usrp_channel_estimation(
             peak_val = cross_corr[peak_idx]
 
             # CSI is the complex channel coefficient (magnitude + phase)
-            csi[client_idx] = peak_val
+            csi[client_idx] = peak_val / N_ZC
 
             print(f"Client {client_idx} - CSI: |h|={np.abs(peak_val):.4f}, phase={np.angle(peak_val):.2f} rad")
         else:
@@ -131,12 +134,15 @@ def usrp_transmit_and_receive(
 
     start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.TimeSpec(0.5)
     rx_symbols = None
+    rx_ready = threading.Event()
 
     def rx_thread_fn():
         nonlocal rx_symbols
+        rx_ready.set()  # Signal that RX stream command is about to be issued
         rx_symbols = server_usrp.rx_signal(num_samps=signal_len + 2000, start_time=start_time)
 
     def tx_thread_fn(client_idx: int):
+        rx_ready.wait()  # Wait for RX to be configured before transmitting
         client_usrps[client_idx].tx_signal(waveform=encoded_signals[client_idx], repeat=False, start_time=start_time)
 
     print(f"[Round {server_round}] USRP OTA: transmitting {signal_len} samples from {num_clients} clients...")
@@ -151,8 +157,7 @@ def usrp_transmit_and_receive(
     rx_thread.join()
 
     if rx_symbols is None:
-        print("Error: RX failed, returning zeros")
-        return np.zeros(signal_len, dtype=np.float64)
+        raise RuntimeError(f"[Round {server_round}] RX failed: no samples received from USRP")
 
     rx_grads = USRP_X310.wave_to_grad(waveform=rx_symbols, amplitude=0.2)
     return rx_grads[:signal_len]

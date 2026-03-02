@@ -250,12 +250,6 @@ class MedViTClient(fl.client.NumPyClient):
         # Compute deltas (what we transmit for OTA)
         deltas = [final - init for final, init in zip(final_parameters, initial_parameters)]
 
-        # Print first 3 delta values for first 3 layers
-        print(f"  └─ Delta values (first 3 per layer):")
-        for i in range(min(3, len(deltas))):
-            vals = deltas[i].flatten()[:3]
-            print(f"      Layer {i}: [{vals[0]:+.6f}, {vals[1]:+.6f}, {vals[2]:+.6f}, ...]")
-
         # Check if we should send deltas (for OTA) or full weights (standard FL)
         send_deltas = config.get("send_deltas", True)  # Default to deltas for OTA
 

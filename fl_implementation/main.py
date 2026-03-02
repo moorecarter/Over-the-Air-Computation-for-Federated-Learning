@@ -22,8 +22,10 @@ warnings.filterwarnings("ignore")
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Environment variables to suppress various loggers
-os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["GRPC_VERBOSITY"] = "NONE"
 os.environ["GRPC_TRACE"] = ""
+os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "0"
+os.environ["ABSL_MIN_LOG_LEVEL"] = "4"  # Suppress abseil C++ logs (0=INFO,1=WARNING,2=ERROR,3=FATAL,4=OFF)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 # Completely disable Ray's logging
@@ -261,7 +263,6 @@ def main():
     strategy = create_server_strategy(
         server_usrp_addr=args.server_usrp_addr if args.use_usrp else None,
         client_usrp_addrs=args.client_usrp_addrs if args.use_usrp else None,
-        use_usrp=args.use_usrp,
         model_name=args.model,
         num_classes=8,
         img_size=args.img_size,
@@ -281,41 +282,40 @@ def main():
     print("Training")
     print("=" * 60)
 
-    # Capture server history from thread
-    server_result = {}
-
-    def run_server():
-        server_result["history"] = fl.server.start_server(
-            server_address="localhost:8080",
-            config=ServerConfig(num_rounds=args.num_rounds),
-            strategy=strategy,
-        )
-
-    # Start server thread
-    server_thread = threading.Thread(target=run_server)
-    server_thread.start()
-    time.sleep(2)  # let server bind
-
-    # Start each client in a thread
+    # Launch clients in a background thread, then run server on main thread
+    # (Flower's server needs main thread for signal.signal() handlers)
+    GRPC_MAX_MESSAGE_LENGTH = 512 * 1024 * 1024  # 512 MB
     client_threads = []
-    for i in range(args.num_clients):
-        client = client_fn(str(i))
-        t = threading.Thread(
-            target=fl.client.start_client,
-            kwargs={
-                "server_address": "localhost:8080",
-                "client": client.to_client(),  # NumPyClient -> Client adapter
-            }
-        )
-        t.start()
-        client_threads.append(t)
 
-    # Wait for all threads to finish
-    for t in client_threads:
-        t.join()
-    server_thread.join()
+    def start_clients():
+        time.sleep(2)  # let server bind first
+        for i in range(args.num_clients):
+            client = client_fn(str(i))
+            t = threading.Thread(
+                target=fl.client.start_client,
+                kwargs={
+                    "server_address": "localhost:8080",
+                    "client": client.to_client(),
+                    "grpc_max_message_length": GRPC_MAX_MESSAGE_LENGTH,
+                }
+            )
+            t.start()
+            client_threads.append(t)
+        for t in client_threads:
+            t.join()
 
-    history = server_result.get("history")
+    clients_thread = threading.Thread(target=start_clients)
+    clients_thread.start()
+
+    # Run server on main thread
+    history = fl.server.start_server(
+        server_address="localhost:8080",
+        config=ServerConfig(num_rounds=args.num_rounds),
+        strategy=strategy,
+        grpc_max_message_length=GRPC_MAX_MESSAGE_LENGTH,
+    )
+
+    clients_thread.join()
 
 
 

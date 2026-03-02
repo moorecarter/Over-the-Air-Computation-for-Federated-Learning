@@ -29,6 +29,25 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 
 
+def log_delta_range(
+    client_results: List[Tuple[np.ndarray, ...]],
+    num_params: int,
+    server_round: int,
+) -> None:
+    """Log the global min/max of client deltas across all layers and clients."""
+    global_min = np.inf
+    global_max = -np.inf
+    for param_idx in range(num_params):
+        for result in client_results:
+            layer_delta = result[0][param_idx]
+            global_min = min(global_min, layer_delta.min())
+            global_max = max(global_max, layer_delta.max())
+    print(
+        f"  [Round {server_round}] Delta range: [{global_min:.6e}, {global_max:.6e}], "
+        f"span: {global_max - global_min:.6e}"
+    )
+
+
 class OTAChannelModel:
     """
     Simulates wireless channel effects for OTA computation.
@@ -331,52 +350,43 @@ class FedAvgOTA(FedAvg):
         aggregated_ndarrays = []
         num_params = len(client_results[0][0])
 
+        # Flatten all parameter deltas per client into one vector per client
+        param_shapes = [client_results[0][0][i].shape for i in range(num_params)]
+
+        flat_deltas = []
+        for client_idx in range(num_clients):
+            flat = np.concatenate([
+                client_results[client_idx][0][i].flatten()
+                for i in range(num_params)
+            ])
+            flat_deltas.append(flat)
+
+        log_delta_range(client_results, num_params, server_round)
+
         if self.usrp_callback is not None:
-            # === BULK OTA: single radio transmission per round ===
-            # Flatten all parameter deltas per client into one vector,
-            # do one TX/RX cycle, then unflatten the aggregated result.
-            param_shapes = [client_results[0][0][i].shape for i in range(num_params)]
-
-            flat_deltas = []
-            for client_idx in range(num_clients):
-                flat = np.concatenate([
-                    client_results[client_idx][0][i].flatten()
-                    for i in range(num_params)
-                ])
-                flat_deltas.append(flat)
-
+            # === REAL OTA: single USRP transmission per round ===
             aggregated_flat = self.usrp_callback(
                 client_deltas=flat_deltas,
                 weights=weights,
                 server_round=server_round,
                 channel_state=channel_state,
             )
-
-            offset = 0
-            for param_idx in range(num_params):
-                size = int(np.prod(param_shapes[param_idx]))
-                delta = aggregated_flat[offset:offset + size].reshape(param_shapes[param_idx])
-                if is_delta and self._global_parameters is not None:
-                    aggregated_ndarrays.append(self._global_parameters[param_idx] + delta)
-                else:
-                    aggregated_ndarrays.append(delta)
-                offset += size
         else:
-            # === SIMULATED OTA: per-parameter-layer aggregation ===
-            for param_idx in range(num_params):
-                client_deltas = [result[0][param_idx] for result in client_results]
-                print(f"Client deltas: {client_deltas}")
-                print(f"client_deltas shape: {client_deltas[0].shape}")
-                aggregated_delta = self.channel.aggregate_with_channel(
-                    client_deltas, weights
-                )
+            # === SIMULATED OTA: single channel simulation per round ===
+            aggregated_flat = self.channel.aggregate_with_channel(
+                flat_deltas, weights
+            )
 
-                if is_delta and self._global_parameters is not None:
-                    aggregated_ndarrays.append(
-                        self._global_parameters[param_idx] + aggregated_delta
-                    )
-                else:
-                    aggregated_ndarrays.append(aggregated_delta)
+        # Unflatten back into per-layer arrays
+        offset = 0
+        for param_idx in range(num_params):
+            size = int(np.prod(param_shapes[param_idx]))
+            delta = aggregated_flat[offset:offset + size].reshape(param_shapes[param_idx])
+            if is_delta and self._global_parameters is not None:
+                aggregated_ndarrays.append(self._global_parameters[param_idx] + delta)
+            else:
+                aggregated_ndarrays.append(delta)
+            offset += size
 
         # Update stored global parameters
         self._global_parameters = aggregated_ndarrays
