@@ -149,11 +149,11 @@ class USRP_X310():
         except Exception as e:
             print("Error transmitting signal:", e)
             return None
-    
-    def _normalize_grads(self, grads: np.ndarray, eps = 1e-12):
+    @staticmethod
+    def normalize_grads(self, grads: np.ndarray, eps = 1e-12):
         scale = np.max(np.abs(grads)) + eps
         return grads / scale, scale
-    
+    @staticmethod
     def _upsample(self, symbols, sps):
         # Pad in between with zeros
         upsampled = np.zeros(len(symbols) * sps, dtype=np.complex64)
@@ -175,15 +175,15 @@ class USRP_X310():
         h /= np.sqrt(np.sum(h**2))
     
         return h.astype(np.float32)
-
-    def grad_to_wave(self, grads: np.ndarray, amplitude: float):
+    @staticmethod
+    def grad_to_wave(self, grads: np.ndarray, amplitude: float, fading_coeff: float, phase_error: float, power_scale: float, csi: complex = 1.0):
         # Normalize : Re->IQ : Upsample : RRC : waveform = RRC ⓧ Upsample
 
         # Normalize
-        normalized, scale = self._normalize_grads(grads=grads) 
-
+        # normalized, scale = self.normalize_grads(grads=grads) 
+        
         # Re-> IQ
-        symbols = amplitude * normalized.astype(np.complex64)
+        symbols = amplitude * grads.astype(np.complex64) / csi
 
         # Upsample for RRC
         # upsampled = self._upsample(symbols=symbols, sps=sps)
@@ -192,34 +192,18 @@ class USRP_X310():
         # rrc_filter = USRP_X310.rrc_filter(sps=sps)
         # rrc_waveform = np.convolve(upsampled, rrc_filter, mode='same')
 
-        return symbols, scale
+        return symbols
 
-
-    def tx_pilot(self, amplitude: float, pilot: np.ndarray, start_time: uhd.libpyuhd.types.TimeSpec = None):
-        pilot = np.array(pilot, dtype=np.complex64)
-        # Normalize, Re->IQ, Upsample, RRC
-        waveform, _  = self.grad_to_wave(grads=pilot, amplitude=amplitude)
-        self.tx_signal(waveform=waveform, repeat=False, start_time=start_time)
-        return waveform
-
-    def rx_pilot(self, num_samps: int, start_time: uhd.libpyuhd.types.TimeSpec = None):
-        rx_pilot = self.rx_signal(num_samps, start_time)
-        # Reverse RRC Filter 
-        # rx_matched = np.convolve(rx_pilot, self._rrc_filter(sps=sps).astype(np.complex64)[::-1], mode='same')
-
-        # Downsamp
-        
-        # rx_symbols = rx_pilot[::sps]
-        return rx_pilot
     @staticmethod
     def wave_to_grad(wave: np.ndarray, amplitude: float, sps: int, csi, scale: float):
         # Reverse RRC
-        rrc_filter = USRP_X310.rrc_filter(sps=sps).astype(np.complex64)
-        rx_matched = np.convolve(wave, rrc_filter[::-1], mode='same')
+        # rrc_filter = USRP_X310.rrc_filter(sps=sps).astype(np.complex64)
+        # rx_matched = np.convolve(wave, rrc_filter[::-1], mode='same')
                 
         # Downsamp
-        rx_symbols = rx_matched[::sps]
-        grads = (rx_symbols / csi) / amplitude * scale
+        # rx_symbols = rx_matched[::sps]
+        # grads = (rx_symbols / csi) / amplitude * scale
+        grads = wave.astype(np.float32) / amplitude
 
         return np.real(grads)
 
