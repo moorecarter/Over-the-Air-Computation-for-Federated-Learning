@@ -19,7 +19,7 @@ from flwr.server import ServerConfig
 from .model import create_model
 from .ota_strategy import FedAvgOTA, create_ota_strategy
 
-from .usrp_txrx import create_usrp_transmit_and_receive_callback, create_usrp_channel_estimate_callback
+from .usrp_txrx import create_usrp_transmit_and_receive_callback, create_usrp_channel_estimate_callback, init_all_usrps
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     """
     Aggregate metrics from multiple clients using weighted average.
@@ -232,13 +232,17 @@ def create_server_strategy(
     """
     # Get initial parameters
     initial_parameters = get_initial_parameters(model_name, num_classes, img_size)
-
+    channel_estimate_callback = None
+    usrp_callback = None
     # Create channel estimate callback
     if server_usrp_addr and client_usrp_addrs:
+        # Initialize and synchronize all USRPs before creating callbacks
+        init_all_usrps(server_usrp_addr, client_usrp_addrs)
         channel_estimate_callback = create_usrp_channel_estimate_callback(server_usrp_addr, client_usrp_addrs)
 
         # Create USRP callback
         usrp_callback = create_usrp_transmit_and_receive_callback(server_usrp_addr, client_usrp_addrs)
+
 
     # Create evaluation function if test loader provided
     evaluate_fn = None

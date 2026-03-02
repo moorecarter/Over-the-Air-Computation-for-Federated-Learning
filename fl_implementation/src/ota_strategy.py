@@ -12,7 +12,7 @@ OTA conditions before deploying to actual USRP hardware.
 """
 
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Tuple, Union
 
 # Channel state from estimation (e.g. real USRP pilots). Keys match OTAChannelModel.
 ChannelStateDict = Dict[str, np.ndarray]  # e.g. fading_coeffs, phase_errors, power_scales
@@ -242,8 +242,10 @@ class FedAvgOTA(FedAvg):
                 return dict with keys e.g. "fading_coeffs", "phase_errors", "power_scales"
                 (each np.ndarray length num_clients). Returned state is passed to
                 usrp_callback as channel_state for pre-coding/equalization.
-            usrp_callback: Optional callback for USRP transmission.
-                           Signature: callback(client_deltas, weights, ...) -> aggregated_delta
+            usrp_callback: Optional callback for bulk USRP OTA transmission.
+                           Signature: callback(client_deltas, weights, server_round, channel_state)
+                           where client_deltas is a list of flat 1D arrays (all params
+                           concatenated per client). Returns a single flat aggregated array.
                            If None, uses simulated OTA channel.
 
             (Other args are standard FedAvg parameters)
@@ -326,47 +328,55 @@ class FedAvgOTA(FedAvg):
         if self.channel_estimate_callback is not None:
             channel_state = self.channel_estimate_callback(num_clients, server_round)
 
-        # Aggregate each parameter array separately
         aggregated_ndarrays = []
         num_params = len(client_results[0][0])
 
-        for param_idx in range(num_params):
-            # Collect this parameter's delta from all clients
-            client_deltas = [result[0][param_idx] for result in client_results]
+        if self.usrp_callback is not None:
+            # === BULK OTA: single radio transmission per round ===
+            # Flatten all parameter deltas per client into one vector,
+            # do one TX/RX cycle, then unflatten the aggregated result.
+            param_shapes = [client_results[0][0][i].shape for i in range(num_params)]
 
-            # === USRP TRANSMISSION POINT ===
-            # This is where deltas would be transmitted over the air
-            # client_deltas: list of numpy arrays, one per client
-            # weights: importance of each client (by sample count)
+            flat_deltas = []
+            for client_idx in range(num_clients):
+                flat = np.concatenate([
+                    client_results[client_idx][0][i].flatten()
+                    for i in range(num_params)
+                ])
+                flat_deltas.append(flat)
 
-            if self.usrp_callback is not None:
-                # Use real USRP for OTA aggregation (pass channel_state for pre-coding if available)
-                kwargs: Dict[str, Any] = dict(
-                    client_deltas=client_deltas,
-                    weights=weights,
-                    param_idx=param_idx,
-                    server_round=server_round,
-                )
-                if channel_state is not None:
-                    kwargs["channel_state"] = channel_state
-                aggregated_delta = self.usrp_callback(**kwargs)
-            else:
-                # Use simulated OTA channel
+            aggregated_flat = self.usrp_callback(
+                client_deltas=flat_deltas,
+                weights=weights,
+                server_round=server_round,
+                channel_state=channel_state,
+            )
+
+            offset = 0
+            for param_idx in range(num_params):
+                size = int(np.prod(param_shapes[param_idx]))
+                delta = aggregated_flat[offset:offset + size].reshape(param_shapes[param_idx])
+                if is_delta and self._global_parameters is not None:
+                    aggregated_ndarrays.append(self._global_parameters[param_idx] + delta)
+                else:
+                    aggregated_ndarrays.append(delta)
+                offset += size
+        else:
+            # === SIMULATED OTA: per-parameter-layer aggregation ===
+            for param_idx in range(num_params):
+                client_deltas = [result[0][param_idx] for result in client_results]
+                print(f"Client deltas: {client_deltas}")
+                print(f"client_deltas shape: {client_deltas[0].shape}")
                 aggregated_delta = self.channel.aggregate_with_channel(
                     client_deltas, weights
                 )
 
-            if is_delta:
-                # Clients sent deltas - apply to global parameters
-                if self._global_parameters is not None:
-                    new_param = self._global_parameters[param_idx] + aggregated_delta
+                if is_delta and self._global_parameters is not None:
+                    aggregated_ndarrays.append(
+                        self._global_parameters[param_idx] + aggregated_delta
+                    )
                 else:
-                    # First round - just use the delta (shouldn't happen normally)
-                    new_param = aggregated_delta
-                aggregated_ndarrays.append(new_param)
-            else:
-                # Clients sent full weights - use directly (standard FedAvg)
-                aggregated_ndarrays.append(aggregated_delta)
+                    aggregated_ndarrays.append(aggregated_delta)
 
         # Update stored global parameters
         self._global_parameters = aggregated_ndarrays

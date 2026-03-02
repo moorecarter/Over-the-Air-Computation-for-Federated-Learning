@@ -2,7 +2,7 @@ from .usrp_x310 import USRP_X310
 import numpy as np
 import threading
 import time
-from typing import Dict, List, Optional
+from typing import List, Optional
 import math
 import uhd.libpyuhd.types
 def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
@@ -32,7 +32,10 @@ def init_all_usrps(server_addr: str, client_addrs: List[str]):
     all_usrps = [_get_usrp(server_addr)] + [_get_usrp(addr) for addr in client_addrs]
     # ============================    CHANGE TO EXTERNAL WHEN OCTOCLOCK ADDED   ============================
     for u in all_usrps:
-        u.set_clk(clk_source={"internal" if u.usrp.addr == server_addr else "external"}, time_source={"internal" if u.usrp.addr == server_addr else "external"})
+        u.set_clk(
+            clk_source="internal" if u.ip_addr == server_addr else "external", 
+            time_source="internal" if u.ip_addr == server_addr else "external"
+        )
 
     # Wait for PPS edge, set time to 0 on all at the next PPS
     time.sleep(1.1) 
@@ -59,21 +62,22 @@ def usrp_channel_estimation(
 
     def rx_thread_fn():
         nonlocal rx_symbols
-        rx_symbols = server_usrp.rx_pilot(num_samps=256 + 2000)
+        rx_symbols = server_usrp.rx_signal(num_samps=256 + 2000)
 
     for client_idx in range(num_clients):
+        rx_symbols = None
         client_usrp = _get_usrp(client_usrp_addr[client_idx])
         if not client_usrp.tx_channels:
             client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
         rx_thread = threading.Thread(target=rx_thread_fn)
         rx_thread.start()
         time.sleep(0.05)
-        client_usrp.tx_pilot(amplitude=1.0, pilot=KNOWN_PILOT)
+        client_usrp.tx_signal(waveform=KNOWN_PILOT_WAVEFORM, repeat=False)
         time.sleep(0.05)
         rx_thread.join()
 
         if rx_symbols is not None and len(rx_symbols) >= N_ZC:
-            cross_corr = np.correlate(rx_symbols, KNOWN_PILOT, mode='valid')
+            cross_corr = np.correlate(rx_symbols, KNOWN_PILOT_WAVEFORM, mode='valid')
             peak_idx = np.argmax(np.abs(cross_corr))
             peak_val = cross_corr[peak_idx]
 
@@ -98,10 +102,9 @@ def usrp_transmit_and_receive(
     server_usrp_addr: str,
     client_usrp_addr: List[str],
     client_signals: List[np.ndarray],
-    channel_state: List[np.complex64],
-    weights: Optional[List[float]] = None
+    channel_state: np.ndarray,
+    weights: Optional[List[float]] = None,
 ):
-
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
         server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
@@ -110,12 +113,16 @@ def usrp_transmit_and_receive(
         if not client_usrp.tx_channels:
             client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
 
+    if channel_state is None:
+        channel_state = np.ones(num_clients, dtype=np.complex64)
+
     if weights is None:
         weights = np.ones(num_clients) / num_clients
     else:
         weights = np.array(weights)
-        weights = weights / weights.sum()  # Normalize
-    
+        weights = weights / weights.sum()
+
+    signal_len = len(client_signals[0].flatten())
     encoded_signals = []
     for i, sig in enumerate(client_signals):
         weighted_grads = sig.flatten() * weights[i]
@@ -124,15 +131,16 @@ def usrp_transmit_and_receive(
 
     start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.TimeSpec(0.5)
     rx_symbols = None
+
     def rx_thread_fn():
         nonlocal rx_symbols
-        rx_symbols = server_usrp.rx_signal(num_samps=len(encoded_signals[0]) + 2000, start_time=start_time)
+        rx_symbols = server_usrp.rx_signal(num_samps=signal_len + 2000, start_time=start_time)
+
     def tx_thread_fn(client_idx: int):
         client_usrps[client_idx].tx_signal(waveform=encoded_signals[client_idx], repeat=False, start_time=start_time)
-    
-    print("Starting USRP transmit and receive...")
 
-    #Start RX and TX threads
+    print(f"[Round {server_round}] USRP OTA: transmitting {signal_len} samples from {num_clients} clients...")
+
     rx_thread = threading.Thread(target=rx_thread_fn)
     tx_threads = [threading.Thread(target=tx_thread_fn, args=(i,)) for i in range(num_clients)]
     rx_thread.start()
@@ -141,30 +149,31 @@ def usrp_transmit_and_receive(
     for t in tx_threads:
         t.join()
     rx_thread.join()
-    rx_grads = USRP_X310.wave_to_grad(wave=rx_symbols, amplitude=0.2)
-    rx_grads = rx_grads[:client_signals[0].flatten().shape[0]].reshape(client_signals[0].shape)
-    return rx_grads
+
+    if rx_symbols is None:
+        print("Error: RX failed, returning zeros")
+        return np.zeros(signal_len, dtype=np.float64)
+
+    rx_grads = USRP_X310.wave_to_grad(waveform=rx_symbols, amplitude=0.2)
+    return rx_grads[:signal_len]
+
 
 def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
-    def callback(client_deltas, weights, param_idx, server_round, channel_state, **kwargs):
-        # 1. Derive num_clients from the incoming data
+    """Create a bulk OTA callback for the strategy.
+
+    Signature matches what FedAvgOTA.aggregate_fit expects:
+        callback(client_deltas, weights, server_round, channel_state) -> aggregated flat array
+    """
+    def callback(client_deltas, weights, server_round, channel_state=None, **kwargs):
         num_clients = len(client_deltas)
-        
-        # 2. Map the new caller variables to your USRP function's expected inputs.
-        # Assuming 'client_deltas' maps to what you previously called 'client_signals'
-        client_signals = client_deltas 
-        
-        # 3. Call your underlying USRP function
-        # Note: If your usrp_transmit_and_receive needs channel_state, weights, 
-        # or param_idx, you'll need to pass them in here too!
         return usrp_transmit_and_receive(
             num_clients,
             server_round,
             server_usrp_addr,
             client_usrp_addr,
-            client_signals,
+            client_deltas,
             channel_state,
-            weights
+            weights,
         )
 
     return callback

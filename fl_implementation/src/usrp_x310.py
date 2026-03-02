@@ -9,6 +9,7 @@ class USRP_X310():
             ip_addr: str = "192.168.40.2", 
         ):
         self.usrp = uhd.usrp.MultiUSRP(f"addr={ip_addr}")
+        self.ip_addr = ip_addr
         self.tx_channels = {}
         self.rx_channels = {}
         print("Connected to:", self.usrp.get_usrp_name())
@@ -74,7 +75,6 @@ class USRP_X310():
     def set_clk(self, clk_source: str = "external", time_source: str = "external"):
             self.usrp.set_clock_source(clk_source)
             self.usrp.set_time_source(time_source)
-            self.usrp.set_time_now(uhd.libpyuhd.types.TimeSpec(0.0))
             print("External clock & PPS enabled, time reset to 0.")
     def rx_signal(
             self,
@@ -95,7 +95,7 @@ class USRP_X310():
             stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.num_done)
             stream_cmd.num_samps = num_samps
             stream_cmd.stream_now = True if start_time is None else False
-            stream_cmd.time_spec = uhd.libpyuhd.types.time_spec(2.0) if start_time is None else start_time 
+            stream_cmd.time_spec = uhd.libpyuhd.types.TimeSpec(2.0) if start_time is None else start_time 
             streamer.issue_stream_cmd(stream_cmd)
 
             samples = np.zeros(num_samps, dtype=np.complex64)
@@ -132,29 +132,38 @@ class USRP_X310():
             streamer = self.usrp.get_tx_stream(st_args)
             metadata = uhd.types.TXMetadata()
             metadata.start_of_burst = True
-            metadata.end_of_burst = True
-            metadata.has_time_spec = False
+            metadata.end_of_burst = False
+            metadata.has_time_spec = start_time is not None
             if start_time is not None:
-                metadata.has_time_spec = True
                 metadata.time_spec = start_time
 
-        # Make sure waveform is 2D: channels x samples
             if waveform.ndim == 1:
                 waveform = waveform.reshape(1, -1)
 
-            # Send waveform
-            streamer.send_waveform(waveform, channel=chan, repeat=repeat, timeout=timeout, metadata=metadata)
-            return waveform.shape[-1]                
+            num_samps = waveform.shape[-1]
+            total_sent = 0
+            while total_sent < num_samps:
+                chunk = waveform[:, total_sent:]
+                sent = streamer.send(chunk, metadata, timeout)
+                total_sent += sent
+                metadata.start_of_burst = False
+                metadata.has_time_spec = False
+
+            # Signal end of burst
+            metadata.end_of_burst = True
+            streamer.send(np.zeros((1, 0), dtype=np.complex64), metadata, timeout)
+
+            return num_samps                
             
         except Exception as e:
             print("Error transmitting signal:", e)
             return None
     @staticmethod
-    def normalize_grads(self, grads: np.ndarray, eps = 1e-12):
+    def normalize_grads(grads: np.ndarray, eps = 1e-12):
         scale = np.max(np.abs(grads)) + eps
         return grads / scale, scale
     @staticmethod
-    def _upsample(self, symbols, sps):
+    def _upsample(symbols, sps):
         # Pad in between with zeros
         upsampled = np.zeros(len(symbols) * sps, dtype=np.complex64)
         upsampled[::sps] = symbols
@@ -176,7 +185,7 @@ class USRP_X310():
     
         return h.astype(np.float32)
     @staticmethod
-    def grad_to_wave(self, grads: np.ndarray, amplitude: float, csi: complex = 1.0):
+    def grad_to_wave(grads: np.ndarray, amplitude: float, csi: complex = 1.0):
         # Normalize : Re->IQ : Upsample : RRC : waveform = RRC ⓧ Upsample
 
         # Normalize
@@ -195,7 +204,7 @@ class USRP_X310():
         return symbols
 
     @staticmethod
-    def wave_to_grad(wave: np.ndarray, amplitude: float):
+    def wave_to_grad(waveform: np.ndarray, amplitude: float):
         # Reverse RRC
         # rrc_filter = USRP_X310.rrc_filter(sps=sps).astype(np.complex64)
         # rx_matched = np.convolve(wave, rrc_filter[::-1], mode='same')
@@ -203,13 +212,9 @@ class USRP_X310():
         # Downsamp
         # rx_symbols = rx_matched[::sps]
         # grads = (rx_symbols / csi) / amplitude * scale
-        grads = wave.astype(np.complex64) / amplitude
+        grads = waveform.astype(np.complex64) / amplitude
 
         return np.real(grads)
-
-
-
-
 
 
     
