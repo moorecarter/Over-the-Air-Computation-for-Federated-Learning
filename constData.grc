@@ -33,6 +33,34 @@ options:
     state: enabled
 
 blocks:
+- name: H2_state
+  id: variable
+  parameters:
+    comment: ''
+    value: np.fromfile(open("/tmp/csi_2_state.bin", "rb"), dtype=np.complex64)[-1]
+      if (os.path.exists("/tmp/csi_2_state.bin") and os.path.getsize("/tmp/csi_2_state.bin")
+      >= 8) else 1.0+0j
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1072, 384.0]
+    rotation: 0
+    state: enabled
+- name: H4_state
+  id: variable
+  parameters:
+    comment: ''
+    value: np.fromfile(open("/tmp/csi_4_state.bin", "rb"), dtype=np.complex64)[-1]
+      if (os.path.exists("/tmp/csi_4_state.bin") and os.path.getsize("/tmp/csi_4_state.bin")
+      >= 8) else 1.0+0j
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1072, 464.0]
+    rotation: 0
+    state: enabled
 - name: channel0_bandwidth
   id: variable
   parameters:
@@ -87,7 +115,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1200, 176.0]
+    coordinate: [1360, 80.0]
     rotation: 0
     state: enabled
 - name: csi_src
@@ -175,23 +203,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [912, 968.0]
-    rotation: 0
-    state: disabled
-- name: blocks_complex_to_mag_0
-  id: blocks_complex_to_mag
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [904, 968.0]
+    coordinate: [896, 992.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0
@@ -200,7 +212,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    const: 1/0.8
+    const: 1/H2_state
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -209,16 +221,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 448.0]
+    coordinate: [416, 472.0]
     rotation: 0
     state: enabled
-- name: blocks_multiply_const_vxx_0_0
+- name: blocks_multiply_const_vxx_1
   id: blocks_multiply_const_vxx
   parameters:
     affinity: ''
     alias: ''
     comment: ''
-    const: 1/0.88
+    const: 1/H4_state
     maxoutbuf: '0'
     minoutbuf: '0'
     type: complex
@@ -227,7 +239,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 648.0]
+    coordinate: [416, 544.0]
     rotation: 0
     state: enabled
 - name: blocks_vector_source_x_2
@@ -241,13 +253,31 @@ blocks:
     repeat: 'True'
     tags: '[]'
     type: complex
-    vector: '[0.05]'
+    vector: '[0.07+0j]'
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [144, 544.0]
+    coordinate: [152, 464.0]
+    rotation: 0
+    state: enabled
+- name: digital_costas_loop_cc_0
+  id: digital_costas_loop_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    order: '1'
+    use_snr: 'False'
+    w: 2*pi/100
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [648, 1080.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -287,6 +317,19 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [1096, 224.0]
+    rotation: 0
+    state: enabled
+- name: import_2
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: import os
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [960, 184.0]
     rotation: 0
     state: enabled
 - name: qtgui_const_sink_x_0
@@ -378,7 +421,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 1024.0]
+    coordinate: [704, 1304.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -459,7 +502,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 528.0]
+    coordinate: [408, 624.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0_0
@@ -603,7 +646,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1128, 896.0]
+    coordinate: [1128, 848.0]
     rotation: 0
     state: enabled
 - name: qtgui_number_sink_1_0_1_0
@@ -666,9 +709,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1128, 1024.0]
+    coordinate: [1128, 984.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: qtgui_time_sink_x_2
   id: qtgui_time_sink_x
   parameters:
@@ -860,7 +903,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 1128.0]
+    coordinate: [704, 1424.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_sink_0
@@ -1137,7 +1180,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [712, 364.0]
+    coordinate: [712, 348.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_sink_0_0
@@ -1857,15 +1900,14 @@ blocks:
 connections:
 - [blocks_complex_to_float_0, '0', qtgui_number_sink_1_0_1, '0']
 - [blocks_complex_to_float_0, '1', qtgui_number_sink_1_0_1_0, '0']
-- [blocks_complex_to_mag_0, '0', qtgui_number_sink_1_0_1, '0']
 - [blocks_multiply_const_vxx_0, '0', uhd_usrp_sink_0, '0']
-- [blocks_multiply_const_vxx_0_0, '0', uhd_usrp_sink_0_0, '0']
+- [blocks_multiply_const_vxx_1, '0', uhd_usrp_sink_0_0, '0']
 - [blocks_vector_source_x_2, '0', blocks_multiply_const_vxx_0, '0']
-- [blocks_vector_source_x_2, '0', blocks_multiply_const_vxx_0_0, '0']
+- [blocks_vector_source_x_2, '0', blocks_multiply_const_vxx_1, '0']
 - [blocks_vector_source_x_2, '0', qtgui_freq_sink_x_0, '0']
 - [blocks_vector_source_x_2, '0', qtgui_time_sink_x_2, '0']
-- [uhd_usrp_source_0, '0', blocks_complex_to_float_0, '0']
-- [uhd_usrp_source_0, '0', blocks_complex_to_mag_0, '0']
+- [digital_costas_loop_cc_0, '0', blocks_complex_to_float_0, '0']
+- [uhd_usrp_source_0, '0', digital_costas_loop_cc_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_const_sink_x_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_freq_sink_x_0_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_time_sink_x_2_1, '0']
