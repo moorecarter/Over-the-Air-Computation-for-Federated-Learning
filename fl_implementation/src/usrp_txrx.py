@@ -2,7 +2,7 @@ from .usrp_x310 import USRP_X310
 import numpy as np
 import threading
 import time
-from typing import List
+from typing import Dict, List, Optional
 import math
 import uhd.libpyuhd.types
 def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
@@ -17,6 +17,7 @@ def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
     return x
 
 KNOWN_PILOT = _generate_zadoff_chu(N=256, u=1, q=0)
+KNOWN_PILOT_WAVEFORM = USRP_X310.grad_to_wave(grads=KNOWN_PILOT, amplitude=0.2)
 N_ZC = len(KNOWN_PILOT) 
 
 _usrp_cache = {}
@@ -105,7 +106,6 @@ def usrp_channel_estimation(
 
     return {"fading_coeffs": fading_coeffs, "phase_errors": phase_errors, "power_scales": power_scales}
 
-
 def create_usrp_channel_estimate_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
     """Strategy only calls (num_clients, server_round); this binds addresses."""
     return lambda num_clients, server_round: usrp_channel_estimation(
@@ -118,7 +118,10 @@ def usrp_transmit_and_receive(
     server_usrp_addr: str,
     client_usrp_addr: List[str],
     client_signals: List[np.ndarray],
+    channel_state: Dict[str, np.ndarray],
+    weights: Optional[List[float]] = None
 ):
+
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
         server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
@@ -126,14 +129,31 @@ def usrp_transmit_and_receive(
     for client_usrp in client_usrps:
         if not client_usrp.tx_channels:
             client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+
+    encoded_signals = []
+    scales = []
+    for i, sig in enumerate(client_signals):
+        waveform, scale = USRP_X310.grad_to_wave(grads=sig.flatten(), amplitude=0.2, 
+                                                fading_coeff=channel_state["fading_coeffs"][i],
+                                                channel_state=channel_state["phase_errors"][i], 
+                                                power_scale=channel_state["power_scales"][i]
+                                                )
+        encoded_signals.append(waveform)
+        scales.append(scale)
     
+    if weights is None:
+        weights = np.ones(num_clients) / num_clients
+    else:
+        weights = np.array(weights)
+        weights = weights / weights.sum()  # Normalize
+
     start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.TimeSpec(0.5)
     rx_symbols = None
     def rx_thread_fn():
         nonlocal rx_symbols
-        rx_symbols = server_usrp.rx_pilot(num_samps=len(client_signals[0]) + 1000, start_time=start_time)
+        rx_symbols = server_usrp.rx_signal(num_samps=len(encoded_signals[0]) + 2000, start_time=start_time)
     def tx_thread_fn(client_idx: int):
-        client_usrps[client_idx].tx_signal(waveform=client_signals[client_idx], repeat=False, start_time=start_time)
+        client_usrps[client_idx].tx_signal(waveform=encoded_signals[client_idx], repeat=False, start_time=start_time)
     
     print("Starting USRP transmit and receive...")
 
@@ -146,11 +166,32 @@ def usrp_transmit_and_receive(
     for t in tx_threads:
         t.join()
     rx_thread.join()
-
-    return rx_symbols
+    # FIX THIS IN THE FUTURE ===
+    rx_grads = USRP_X310.wave_to_grad(wave=rx_symbols, amplitude=0.2)
+    #===
+    rx_grads.reshape(client_signals[0].shape)
+    return rx_grads
 
 def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
-    """Strategy only calls (num_clients, server_round); this binds addresses."""
-    return lambda num_clients, server_round, client_signals: usrp_transmit_and_receive(
-        num_clients, server_round, server_usrp_addr, client_usrp_addr, client_signals
-    )
+    def callback(client_deltas, weights, param_idx, server_round, channel_state, **kwargs):
+        # 1. Derive num_clients from the incoming data
+        num_clients = len(client_deltas)
+        
+        # 2. Map the new caller variables to your USRP function's expected inputs.
+        # Assuming 'client_deltas' maps to what you previously called 'client_signals'
+        client_signals = client_deltas 
+        
+        # 3. Call your underlying USRP function
+        # Note: If your usrp_transmit_and_receive needs channel_state, weights, 
+        # or param_idx, you'll need to pass them in here too!
+        return usrp_transmit_and_receive(
+            num_clients,
+            server_round,
+            server_usrp_addr,
+            client_usrp_addr,
+            client_signals,
+            channel_state,
+            weights
+        )
+
+    return callback

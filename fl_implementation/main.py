@@ -9,8 +9,10 @@ import logging
 import os
 import sys
 import warnings
-import contextlib
-import io
+import threading
+import time
+
+
 
 # ============== AGGRESSIVE LOGGING SUPPRESSION ==============
 # Must happen BEFORE any other imports
@@ -20,14 +22,9 @@ warnings.filterwarnings("ignore")
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Environment variables to suppress various loggers
-os.environ["RAY_DEDUP_LOGS"] = "0"
-os.environ["RAY_DEDUP_LOGS_AGG_WINDOW_S"] = "9999"
 os.environ["GRPC_VERBOSITY"] = "ERROR"
 os.environ["GRPC_TRACE"] = ""
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-os.environ["RAY_DISABLE_MEMORY_MONITOR"] = "1"
-os.environ["RAY_memory_monitor_refresh_ms"] = "0"
-os.environ["RAY_IGNORE_UNHANDLED_ERRORS"] = "1"
 
 # Completely disable Ray's logging
 os.environ["RAY_LOG_TO_STDERR"] = "0"
@@ -38,8 +35,6 @@ logging.getLogger().setLevel(logging.CRITICAL)
 
 # Suppress specific loggers
 _loggers_to_suppress = [
-    "ray", "ray.tune", "ray.rllib", "ray.train", "ray.data", "ray.serve",
-    "ray.air", "ray._private", "ray.worker", "ray.util",
     "flwr", "flower", "grpc", "urllib3", "asyncio", "absl", "werkzeug",
     "numba", "PIL", "matplotlib", "tensorflow", "torch", "torchvision"
 ]
@@ -188,6 +183,26 @@ def parse_args():
         help="Random seed for reproducibility",
     )
 
+    # USRP configuration
+    parser.add_argument(
+        "--use-usrp",
+        action="store_true",
+        help="Use real USRP hardware instead of simulated OTA channel",
+    )
+    parser.add_argument(
+        "--server-usrp-addr",
+        type=str,
+        default=None,
+        help="IP address of the server USRP (RX)",
+    )
+    parser.add_argument(
+        "--client-usrp-addrs",
+        nargs="+",
+        type=str,
+        default=None,
+        help="IP addresses of client USRPs (TX), e.g. 192.168.40.3 192.168.40.4",
+    )
+
     return parser.parse_args()
 
 
@@ -244,6 +259,9 @@ def main():
 
     # Create server strategy
     strategy = create_server_strategy(
+        server_usrp_addr=args.server_usrp_addr if args.use_usrp else None,
+        client_usrp_addrs=args.client_usrp_addrs if args.use_usrp else None,
+        use_usrp=args.use_usrp,
         model_name=args.model,
         num_classes=8,
         img_size=args.img_size,
@@ -258,72 +276,48 @@ def main():
         learning_rate=args.learning_rate,
     )
 
-    # Run simulation
+    # Run Training
     print("\n" + "=" * 60)
     print("Training")
     print("=" * 60)
 
-    # Create a filter to capture only client output and clean Ray prefixes
-    class OutputFilter:
-        def __init__(self, stream):
-            self.stream = stream
-            self.keep_patterns = ["Client ", "└─", "Layer ", "[Round", "Global accuracy"]
-            self.skip_patterns = ["raylet", "gcs_server", "MallocStack", "metrics", "core_worker", "file_system_monitor"]
+    # Capture server history from thread
+    server_result = {}
 
-        def write(self, text):
-            for line in text.splitlines(keepends=True):
-                # Skip lines with unwanted patterns
-                if any(p in line for p in self.skip_patterns):
-                    continue
-                # Keep lines with wanted patterns
-                if any(p in line for p in self.keep_patterns):
-                    # Remove Ray prefix: [36m(ClientAppActor pid=...)[0m
-                    import re
-                    clean = re.sub(r'\x1b\[\d+m\([^)]+\)\x1b\[0m\s*', '', line)
-                    if not clean.endswith('\n'):
-                        clean += '\n'
-                    self.stream.write(clean)
-
-        def flush(self):
-            self.stream.flush()
-
-    # Suppress Ray stderr and filter stdout
-    import ray
-    if ray.is_initialized():
-        ray.shutdown()
-
-    # Completely suppress stderr
-    devnull_fd = os.open(os.devnull, os.O_WRONLY)
-    old_stderr_fd = os.dup(2)
-    os.dup2(devnull_fd, 2)
-
-    try:
-        ray.init(
-            logging_level=logging.CRITICAL,
-            log_to_driver=True,
-            include_dashboard=False,
-        )
-
-        # Filter stdout during simulation
-        filtered_stdout = OutputFilter(sys.__stdout__)
-        old_stdout = sys.stdout
-        sys.stdout = filtered_stdout
-
-        history = fl.simulation.start_simulation(
-            client_fn=client_fn,
-            num_clients=args.num_clients,
+    def run_server():
+        server_result["history"] = fl.server.start_server(
+            server_address="localhost:8080",
             config=ServerConfig(num_rounds=args.num_rounds),
             strategy=strategy,
-            client_resources={"num_cpus": 1, "num_gpus": 0.0},
-            ray_init_args={"logging_level": logging.CRITICAL, "log_to_driver": True},
         )
 
-        sys.stdout = old_stdout
-    finally:
-        # Restore stderr
-        os.dup2(old_stderr_fd, 2)
-        os.close(old_stderr_fd)
-        os.close(devnull_fd)
+    # Start server thread
+    server_thread = threading.Thread(target=run_server)
+    server_thread.start()
+    time.sleep(2)  # let server bind
+
+    # Start each client in a thread
+    client_threads = []
+    for i in range(args.num_clients):
+        client = client_fn(str(i))
+        t = threading.Thread(
+            target=fl.client.start_client,
+            kwargs={
+                "server_address": "localhost:8080",
+                "client": client.to_client(),  # NumPyClient -> Client adapter
+            }
+        )
+        t.start()
+        client_threads.append(t)
+
+    # Wait for all threads to finish
+    for t in client_threads:
+        t.join()
+    server_thread.join()
+
+    history = server_result.get("history")
+
+
 
     # Save results
     print("\n" + "=" * 60)
