@@ -40,7 +40,7 @@ def init_all_usrps(server_addr: str, client_addrs: List[str]):
     # Wait for PPS edge, set time to 0 on all at the next PPS
     time.sleep(1.1) 
     for u in all_usrps:
-        u.usrp.set_time_next_pps(uhd.types.TimeSpec(0.0))
+        u.usrp.set_time_next_pps(uhd.libpyuhd.types.time_spec(0.0))
 
     # Wait for that PPS
     time.sleep(1.1)
@@ -57,7 +57,7 @@ def usrp_channel_estimation(
 
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
-        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
     rx_symbols = None
 
     rx_ready = threading.Event()
@@ -72,7 +72,7 @@ def usrp_channel_estimation(
         rx_ready.clear()
         client_usrp = _get_usrp(client_usrp_addr[client_idx])
         if not client_usrp.tx_channels:
-            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
         rx_thread = threading.Thread(target=rx_thread_fn)
         rx_thread.start()
         rx_ready.wait()  # Wait for RX to be configured before transmitting
@@ -110,11 +110,11 @@ def usrp_transmit_and_receive(
 ):
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
-        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
     client_usrps = [_get_usrp(addr) for addr in client_usrp_addr]
     for client_usrp in client_usrps:
         if not client_usrp.tx_channels:
-            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
 
     if channel_state is None:
         channel_state = np.ones(num_clients, dtype=np.complex64)
@@ -132,7 +132,7 @@ def usrp_transmit_and_receive(
         waveform = USRP_X310.grad_to_wave(grads=weighted_grads, amplitude=0.2, csi=channel_state[i])
         encoded_signals.append(waveform)
 
-    start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.TimeSpec(0.5)
+    start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.time_spec(0.5)
     rx_symbols = None
     rx_ready = threading.Event()
 

@@ -12,7 +12,9 @@ class USRP_X310():
         self.ip_addr = ip_addr
         self.tx_channels = {}
         self.rx_channels = {}
-        print("Connected to:", self.usrp.get_usrp_name())
+        self._rx_streamer = None
+        self._tx_streamer = None
+        print("Connected to:", self.usrp.get_mboard_name())
 
     def set_rx(
             self,
@@ -30,6 +32,10 @@ class USRP_X310():
         self.usrp.set_rx_antenna(antenna, channel)
         self.usrp.set_rx_bandwidth(samprate, channel)
         self.rx_channels[channel] = {"freq": freq, "rate": samprate, "gain": gain, "antenna": antenna}
+        # Cache RX streamer (creating new ones each call causes segfaults in UHD 4.x)
+        st_args = uhd.usrp.StreamArgs("fc32", "sc16")
+        st_args.channels = [channel]
+        self._rx_streamer = self.usrp.get_rx_stream(st_args)
         print("\n--- RX DIAGNOSTICS ---")
         print("RX antennas available :", self.usrp.get_rx_antennas())
         print("RX antenna selected   :", self.usrp.get_rx_antenna())
@@ -58,6 +64,10 @@ class USRP_X310():
         self.usrp.set_tx_gain(gain, channel)
         self.usrp.set_tx_antenna(antenna, channel)
         self.tx_channels[channel] = {"freq": freq, "rate": samprate, "gain": gain, "antenna": antenna}
+        # Cache TX streamer (creating new ones each call causes segfaults in UHD 4.x)
+        st_args = uhd.usrp.StreamArgs("fc32", "sc16")
+        st_args.channels = [channel]
+        self._tx_streamer = self.usrp.get_tx_stream(st_args)
         print("\n--- TX DIAGNOSTICS ---")
         print("TX antennas available :", self.usrp.get_tx_antennas())
         print("TX antenna selected   :", self.usrp.get_tx_antenna())
@@ -79,23 +89,20 @@ class USRP_X310():
     def rx_signal(
             self,
             num_samps: int = 10000,
-            start_time: uhd.libpyuhd.types.TimeSpec = None
+            start_time: uhd.libpyuhd.types.time_spec = None
         ):
         try:
-            if not hasattr(self, "rx_channels") or not self.rx_channels:
-                raise RuntimeError("No RX channels configured. Call configure_rx() first.")
-            chan = list(self.rx_channels.keys())[0]  # pick first configured channel
-            st_args = uhd.usrp.StreamArgs("fc32", "sc16")
-            st_args.channels = [chan]
+            if not self.rx_channels or self._rx_streamer is None:
+                raise RuntimeError("No RX channels configured. Call set_rx() first.")
+            streamer = self._rx_streamer
             metadata = uhd.types.RXMetadata()
-            streamer = self.usrp.get_rx_stream(st_args)
             recv_buffer = np.zeros((1, streamer.get_max_num_samps()), dtype=np.complex64)
             
             # Schedule Rx of num_samps samples exactly 3 seconds from last PPS
             stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.num_done)
             stream_cmd.num_samps = num_samps
             stream_cmd.stream_now = True if start_time is None else False
-            stream_cmd.time_spec = uhd.libpyuhd.types.TimeSpec(2.0) if start_time is None else start_time 
+            stream_cmd.time_spec = uhd.libpyuhd.types.time_spec(2.0) if start_time is None else start_time 
             streamer.issue_stream_cmd(stream_cmd)
 
             samples = np.zeros(num_samps, dtype=np.complex64)
@@ -121,15 +128,12 @@ class USRP_X310():
             waveform: np.ndarray, 
             repeat: bool = False,
             timeout: float = 1.0,
-            start_time: uhd.libpyuhd.types.TimeSpec = None,
+            start_time: uhd.libpyuhd.types.time_spec = None,
         ):
         try:
-            if not hasattr(self, "tx_channels") or not self.tx_channels:
-                raise RuntimeError("No TX channels configured. Call configure_tx() first.")
-            chan = list(self.tx_channels.keys())[0]  # pick first configured channel
-            st_args = uhd.usrp.StreamArgs("fc32", "sc16")
-            st_args.channels = [chan]
-            streamer = self.usrp.get_tx_stream(st_args)
+            if not self.tx_channels or self._tx_streamer is None:
+                raise RuntimeError("No TX channels configured. Call set_tx() first.")
+            streamer = self._tx_streamer
             metadata = uhd.types.TXMetadata()
             metadata.start_of_burst = True
             metadata.end_of_burst = False

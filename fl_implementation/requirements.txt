@@ -13,6 +13,6 @@ medmnist>=3.0.0
 ray>=2.0.0
 
 # Utilities
-numpy>=1.24.0
+numpy>=1.24.0,<2
 pillow>=9.0.0
 tqdm>=4.65.0
