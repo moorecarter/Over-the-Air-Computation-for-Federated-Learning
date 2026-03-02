@@ -176,7 +176,7 @@ class USRP_X310():
     
         return h.astype(np.float32)
     @staticmethod
-    def grad_to_wave(self, grads: np.ndarray, amplitude: float, fading_coeff: float, phase_error: float, power_scale: float, csi: complex = 1.0):
+    def grad_to_wave(self, grads: np.ndarray, amplitude: float, csi: complex = 1.0):
         # Normalize : Re->IQ : Upsample : RRC : waveform = RRC ⓧ Upsample
 
         # Normalize
@@ -195,7 +195,7 @@ class USRP_X310():
         return symbols
 
     @staticmethod
-    def wave_to_grad(wave: np.ndarray, amplitude: float, sps: int, csi, scale: float):
+    def wave_to_grad(wave: np.ndarray, amplitude: float):
         # Reverse RRC
         # rrc_filter = USRP_X310.rrc_filter(sps=sps).astype(np.complex64)
         # rx_matched = np.convolve(wave, rrc_filter[::-1], mode='same')
@@ -203,7 +203,7 @@ class USRP_X310():
         # Downsamp
         # rx_symbols = rx_matched[::sps]
         # grads = (rx_symbols / csi) / amplitude * scale
-        grads = wave.astype(np.float32) / amplitude
+        grads = wave.astype(np.complex64) / amplitude
 
         return np.real(grads)
 

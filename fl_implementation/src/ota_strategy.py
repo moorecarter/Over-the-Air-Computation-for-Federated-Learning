@@ -108,7 +108,7 @@ class OTAChannelModel:
         Generate phase errors due to imperfect synchronization.
 
         Returns:
-            Array of phase offsets (radians), one per client
+            Array of phase offsets (radians), o amplitude=ne per client
         """
         if self.sync_error_std == 0:
             return np.zeros(num_clients)
@@ -322,7 +322,7 @@ class FedAvgOTA(FedAvg):
         # --- Channel estimation (real USRP): run once per round before aggregation ---
         # Implement channel_estimate_callback to run pilots on your USRP and return
         # a dict with keys e.g. "fading_coeffs", "phase_errors", "power_scales" (length num_clients).
-        channel_state: Optional[ChannelStateDict] = None
+        channel_state: List[np.complex64] = None
         if self.channel_estimate_callback is not None:
             channel_state = self.channel_estimate_callback(num_clients, server_round)
 

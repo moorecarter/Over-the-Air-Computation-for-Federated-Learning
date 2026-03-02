@@ -17,7 +17,7 @@ def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
     return x
 
 KNOWN_PILOT = _generate_zadoff_chu(N=256, u=1, q=0)
-KNOWN_PILOT_WAVEFORM = USRP_X310.grad_to_wave(grads=KNOWN_PILOT, amplitude=0.2)
+KNOWN_PILOT_WAVEFORM = USRP_X310.grad_to_wave(grads=KNOWN_PILOT, amplitude=1.0)
 N_ZC = len(KNOWN_PILOT) 
 
 _usrp_cache = {}
@@ -50,9 +50,7 @@ def usrp_channel_estimation(
     client_usrp_addr: List[str],
 ):
     print("Starting USRP channel estimation...")
-    fading_coeffs = np.zeros(num_clients)
-    phase_errors = np.zeros(num_clients)
-    power_scales = np.zeros(num_clients)
+    csi = np.ones(num_clients, dtype=np.complex64)
 
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
@@ -61,7 +59,6 @@ def usrp_channel_estimation(
 
     def rx_thread_fn():
         nonlocal rx_symbols
-        # Capture a wide window to ensure we catch the jittery packet
         rx_symbols = server_usrp.rx_pilot(num_samps=256 + 2000)
 
     for client_idx in range(num_clients):
@@ -70,41 +67,24 @@ def usrp_channel_estimation(
             client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
         rx_thread = threading.Thread(target=rx_thread_fn)
         rx_thread.start()
-        
-        # Note: For production-level test engineering, replace time.sleep 
-        # with UHD synchronized time tags (set_time_next_pps).
-        time.sleep(0.05) 
-        
-        # Ensure your tx_pilot method is sending the KNOWN_PILOT array
-        pilot = client_usrp.tx_pilot(amplitude=1.0, pilot=KNOWN_PILOT) 
+        time.sleep(0.05)
+        client_usrp.tx_pilot(amplitude=1.0, pilot=KNOWN_PILOT)
         time.sleep(0.05)
         rx_thread.join()
 
         if rx_symbols is not None and len(rx_symbols) >= N_ZC:
-            # 2. Perform cross-correlation across the ENTIRE received window.
-            # We use a sliding window approach (valid convolution) because the 
-            # sleep() timing jitter means the pilot could be anywhere in rx_symbols.
-            
-            # Using standard convolution for matched filtering
             cross_corr = np.correlate(rx_symbols, KNOWN_PILOT, mode='valid')
-            
-            # Find the peak which indicates where the sequence starts and the channel tap
             peak_idx = np.argmax(np.abs(cross_corr))
             peak_val = cross_corr[peak_idx]
-            
-            # 3. Extract metrics from the peak
-            fading_coeffs[client_idx] = np.abs(peak_val)
-            phase_errors[client_idx] = np.angle(peak_val)
-            
-            # Power scale: divide by the energy of the transmitted pilot
-            pilot_energy = np.sum(np.abs(KNOWN_PILOT)**2)
-            power_scales[client_idx] = np.abs(peak_val) / (pilot_energy + 1e-12)
-            
-            print(f"Client {client_idx} - Peak at sample {peak_idx}, Phase: {phase_errors[client_idx]:.2f} rad")
+
+            # CSI is the complex channel coefficient (magnitude + phase)
+            csi[client_idx] = peak_val
+
+            print(f"Client {client_idx} - CSI: |h|={np.abs(peak_val):.4f}, phase={np.angle(peak_val):.2f} rad")
         else:
             print(f"Error: Did not receive enough samples from client {client_idx}")
 
-    return {"fading_coeffs": fading_coeffs, "phase_errors": phase_errors, "power_scales": power_scales}
+    return csi
 
 def create_usrp_channel_estimate_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
     """Strategy only calls (num_clients, server_round); this binds addresses."""
@@ -118,7 +98,7 @@ def usrp_transmit_and_receive(
     server_usrp_addr: str,
     client_usrp_addr: List[str],
     client_signals: List[np.ndarray],
-    channel_state: Dict[str, np.ndarray],
+    channel_state: List[np.complex64],
     weights: Optional[List[float]] = None
 ):
 
@@ -130,22 +110,17 @@ def usrp_transmit_and_receive(
         if not client_usrp.tx_channels:
             client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
 
-    encoded_signals = []
-    scales = []
-    for i, sig in enumerate(client_signals):
-        waveform, scale = USRP_X310.grad_to_wave(grads=sig.flatten(), amplitude=0.2, 
-                                                fading_coeff=channel_state["fading_coeffs"][i],
-                                                channel_state=channel_state["phase_errors"][i], 
-                                                power_scale=channel_state["power_scales"][i]
-                                                )
-        encoded_signals.append(waveform)
-        scales.append(scale)
-    
     if weights is None:
         weights = np.ones(num_clients) / num_clients
     else:
         weights = np.array(weights)
         weights = weights / weights.sum()  # Normalize
+    
+    encoded_signals = []
+    for i, sig in enumerate(client_signals):
+        weighted_grads = sig.flatten() * weights[i]
+        waveform = USRP_X310.grad_to_wave(grads=weighted_grads, amplitude=0.2, csi=channel_state[i])
+        encoded_signals.append(waveform)
 
     start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.TimeSpec(0.5)
     rx_symbols = None
@@ -166,10 +141,8 @@ def usrp_transmit_and_receive(
     for t in tx_threads:
         t.join()
     rx_thread.join()
-    # FIX THIS IN THE FUTURE ===
     rx_grads = USRP_X310.wave_to_grad(wave=rx_symbols, amplitude=0.2)
-    #===
-    rx_grads.reshape(client_signals[0].shape)
+    rx_grads = rx_grads[:client_signals[0].flatten().shape[0]].reshape(client_signals[0].shape)
     return rx_grads
 
 def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
