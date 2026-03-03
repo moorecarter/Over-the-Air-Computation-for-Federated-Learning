@@ -122,7 +122,7 @@ def create_evaluate_fn(
         avg_loss = total_loss / total if total > 0 else 0.0
         accuracy = correct / total if total > 0 else 0.0
 
-        print(f"\n[Round {server_round}] Global accuracy: {accuracy*100:.2f}%")
+        print(f"[Round {server_round}] Accuracy: {accuracy*100:.2f}%")
 
         return avg_loss, {"accuracy": accuracy}
 

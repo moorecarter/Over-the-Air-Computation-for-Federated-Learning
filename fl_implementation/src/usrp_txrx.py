@@ -52,7 +52,7 @@ def usrp_channel_estimation(
     server_usrp_addr: str,
     client_usrp_addr: List[str],
 ):
-    print("Starting USRP channel estimation...")
+    # print("Starting USRP channel estimation...")
     csi = np.ones(num_clients, dtype=np.complex64)
 
     server_usrp = _get_usrp(server_usrp_addr)
@@ -87,7 +87,7 @@ def usrp_channel_estimation(
             # CSI is the complex channel coefficient (magnitude + phase)
             csi[client_idx] = peak_val / N_ZC
 
-            print(f"Client {client_idx} - CSI: |h|={np.abs(peak_val):.4f}, phase={np.angle(peak_val):.2f} rad")
+            # print(f"Client {client_idx} - CSI: |h|={np.abs(peak_val):.4f}, phase={np.angle(peak_val):.2f} rad")
         else:
             print(f"Error: Did not receive enough samples from client {client_idx}")
 
@@ -145,7 +145,7 @@ def usrp_transmit_and_receive(
         rx_ready.wait()  # Wait for RX to be configured before transmitting
         client_usrps[client_idx].tx_signal(waveform=encoded_signals[client_idx], repeat=False, start_time=start_time)
 
-    print(f"[Round {server_round}] USRP OTA: transmitting {signal_len} samples from {num_clients} clients...")
+    # print(f"[Round {server_round}] USRP OTA: transmitting {signal_len} samples from {num_clients} clients...")
 
     rx_thread = threading.Thread(target=rx_thread_fn)
     tx_threads = [threading.Thread(target=tx_thread_fn, args=(i,)) for i in range(num_clients)]

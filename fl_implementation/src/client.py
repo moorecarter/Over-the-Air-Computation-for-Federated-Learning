@@ -232,29 +232,18 @@ class MedViTClient(fl.client.NumPyClient):
         # Get final parameters after training
         final_parameters = self.get_parameters(config={})
 
-        # Compute gradient (weight delta) statistics
-        grad_stats = compute_gradient_stats(initial_parameters, final_parameters)
-
-        # Print training metrics and gradient info
-        print(
-            f"Client {self.client_id}: "
-            f"loss={avg_loss:.4f}, acc={accuracy:.4f}, "
-            f"samples={total}"
-        )
-        print(
-            f"  └─ Gradient: norm={grad_stats['global_norm']:.6f}, "
-            f"mean={grad_stats['global_mean']:.2e}, "
-            f"std={grad_stats['global_std']:.2e}"
-        )
-
         # Compute deltas (what we transmit for OTA)
         deltas = [final - init for final, init in zip(final_parameters, initial_parameters)]
+
+        # Log first 3 delta values being sent
+        all_flat = np.concatenate([d.flatten() for d in deltas])
+        server_round = int(config.get("server_round", 0))
+        print(f"[Round {server_round}] Client {self.client_id} delta[0:3]: {np.array2string(all_flat[:3], precision=6, separator=', ')}")
 
         # Check if we should send deltas (for OTA) or full weights (standard FL)
         send_deltas = config.get("send_deltas", True)  # Default to deltas for OTA
 
         if send_deltas:
-            # Return DELTAS - this is what gets transmitted over the air
             return (
                 deltas,
                 total,
@@ -262,14 +251,10 @@ class MedViTClient(fl.client.NumPyClient):
                     "loss": avg_loss,
                     "accuracy": accuracy,
                     "client_id": self.client_id,
-                    "gradient_norm": float(grad_stats['global_norm']),
-                    "gradient_mean": float(grad_stats['global_mean']),
-                    "gradient_std": float(grad_stats['global_std']),
-                    "is_delta": True,  # Flag so server knows this is a delta
+                    "is_delta": True,
                 },
             )
         else:
-            # Return full weights (standard FedAvg)
             return (
                 final_parameters,
                 total,
@@ -277,9 +262,6 @@ class MedViTClient(fl.client.NumPyClient):
                     "loss": avg_loss,
                     "accuracy": accuracy,
                     "client_id": self.client_id,
-                    "gradient_norm": float(grad_stats['global_norm']),
-                    "gradient_mean": float(grad_stats['global_mean']),
-                    "gradient_std": float(grad_stats['global_std']),
                     "is_delta": False,
                 },
             )

@@ -361,8 +361,6 @@ class FedAvgOTA(FedAvg):
             ])
             flat_deltas.append(flat)
 
-        log_delta_range(client_results, num_params, server_round)
-
         if self.usrp_callback is not None:
             # === REAL OTA: single USRP transmission per round ===
             aggregated_flat = self.usrp_callback(
@@ -376,6 +374,8 @@ class FedAvgOTA(FedAvg):
             aggregated_flat = self.channel.aggregate_with_channel(
                 flat_deltas, weights
             )
+
+        print(f"[Round {server_round}] Aggregated[0:3]:     {np.array2string(aggregated_flat[:3], precision=6, separator=', ')}")
 
         # Unflatten back into per-layer arrays
         offset = 0

@@ -66,7 +66,7 @@ for logger_name in _loggers_to_suppress:
 from src.data import FederatedDataset
 from src.client import create_client_fn
 from src.server import create_server_strategy
-from src.model import create_model, count_parameters
+from src.model import create_model
 
 
 def parse_args():
@@ -217,10 +217,7 @@ def main():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.experiment_name = f"fl_{args.model}_{args.partition}_{args.ota_channel}_{timestamp}"
 
-    print("=" * 60)
-    print("Federated Learning Demo")
-    print("=" * 60)
-    print(f"Config: {args.num_clients} clients, {args.num_rounds} rounds, {args.partition} partition, {args.ota_channel} channel")
+    print(f"FL: {args.num_clients} clients, {args.num_rounds} rounds, {args.model} ({args.img_size}px), USRP={'ON' if args.use_usrp else 'OFF'}")
 
     # Create output directory
     output_dir = Path(args.output_dir) / args.experiment_name
@@ -235,7 +232,7 @@ def main():
         num_classes=8,  # BloodMNIST has 8 classes
         img_size=args.img_size,
     )
-    print(f"Model: {args.model} ({count_parameters(model):,} parameters)")
+    # print(f"Model: {args.model} ({count_parameters(model):,} parameters)")
     del model  # Free memory
 
     # Create federated dataset
@@ -278,9 +275,6 @@ def main():
     )
 
     # Run Training
-    print("\n" + "=" * 60)
-    print("Training")
-    print("=" * 60)
 
     # Launch clients in a background thread, then run server on main thread
     # (Flower's server needs main thread for signal.signal() handlers)
@@ -320,9 +314,6 @@ def main():
 
 
     # Save results
-    print("\n" + "=" * 60)
-    print("Results")
-    print("=" * 60)
 
     # Get training metrics (fit) if available
     metrics_fit = {}

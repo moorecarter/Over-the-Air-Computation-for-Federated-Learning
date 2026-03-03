@@ -14,7 +14,7 @@ class USRP_X310():
         self.rx_channels = {}
         self._rx_streamer = None
         self._tx_streamer = None
-        print("Connected to:", self.usrp.get_mboard_name())
+        # print("Connected to:", self.usrp.get_mboard_name())
 
     def set_rx(
             self,
@@ -36,18 +36,18 @@ class USRP_X310():
         st_args = uhd.usrp.StreamArgs("fc32", "sc16")
         st_args.channels = [channel]
         self._rx_streamer = self.usrp.get_rx_stream(st_args)
-        print("\n--- RX DIAGNOSTICS ---")
-        print("RX antennas available :", self.usrp.get_rx_antennas())
-        print("RX antenna selected   :", self.usrp.get_rx_antenna())
-        print("Requested RX freq     :", freq)
-        print("Actual RX freq        :", self.usrp.get_rx_freq())
-        print("Requested RX rate     :", samprate)
-        print("Actual RX rate        :", self.usrp.get_rx_rate())
-        print("Requested RX gain     :", gain)
-        print("Actual RX gain        :", self.usrp.get_rx_gain())
-        print("RX bandwidth          :", self.usrp.get_rx_bandwidth())
-        print("----------------------\n")
-        print(f"RX channel {channel}, antenna {antenna} configured. ")
+        # print("\n--- RX DIAGNOSTICS ---")
+        # print("RX antennas available :", self.usrp.get_rx_antennas())
+        # print("RX antenna selected   :", self.usrp.get_rx_antenna())
+        # print("Requested RX freq     :", freq)
+        # print("Actual RX freq        :", self.usrp.get_rx_freq())
+        # print("Requested RX rate     :", samprate)
+        # print("Actual RX rate        :", self.usrp.get_rx_rate())
+        # print("Requested RX gain     :", gain)
+        # print("Actual RX gain        :", self.usrp.get_rx_gain())
+        # print("RX bandwidth          :", self.usrp.get_rx_bandwidth())
+        # print("----------------------\n")
+        # print(f"RX channel {channel}, antenna {antenna} configured. ")
 
     def set_tx(
             self,
@@ -68,24 +68,24 @@ class USRP_X310():
         st_args = uhd.usrp.StreamArgs("fc32", "sc16")
         st_args.channels = [channel]
         self._tx_streamer = self.usrp.get_tx_stream(st_args)
-        print("\n--- TX DIAGNOSTICS ---")
-        print("TX antennas available :", self.usrp.get_tx_antennas())
-        print("TX antenna selected   :", self.usrp.get_tx_antenna())
-        print("Requested TX freq     :", freq)
-        print("Actual TX freq        :", self.usrp.get_tx_freq())
-        print("Requested TX rate     :", samprate)
-        print("Actual TX rate        :", self.usrp.get_tx_rate())
-        print("Requested TX gain     :", gain)
-        print("Actual TX gain        :", self.usrp.get_tx_gain())
-        print("TX gain range :", self.usrp.get_tx_gain_range())
-        print("TX bandwidth          :", self.usrp.get_tx_bandwidth())
-        print("----------------------\n")
-        print(f"TX channel {channel}, antenna {antenna} configured.")
+        # print("\n--- TX DIAGNOSTICS ---")
+        # print("TX antennas available :", self.usrp.get_tx_antennas())
+        # print("TX antenna selected   :", self.usrp.get_tx_antenna())
+        # print("Requested TX freq     :", freq)
+        # print("Actual TX freq        :", self.usrp.get_tx_freq())
+        # print("Requested TX rate     :", samprate)
+        # print("Actual TX rate        :", self.usrp.get_tx_rate())
+        # print("Requested TX gain     :", gain)
+        # print("Actual TX gain        :", self.usrp.get_tx_gain())
+        # print("TX gain range :", self.usrp.get_tx_gain_range())
+        # print("TX bandwidth          :", self.usrp.get_tx_bandwidth())
+        # print("----------------------\n")
+        # print(f"TX channel {channel}, antenna {antenna} configured.")
 
     def set_clk(self, clk_source: str = "external", time_source: str = "external"):
             self.usrp.set_clock_source(clk_source)
             self.usrp.set_time_source(time_source)
-            print("External clock & PPS enabled, time reset to 0.")
+            # print("External clock & PPS enabled, time reset to 0.")
     def rx_signal(
             self,
             num_samps: int = 10000,
