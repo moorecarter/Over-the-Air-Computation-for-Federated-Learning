@@ -90,12 +90,12 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: (1.0+0.0j,1.0000+0.0000j,0.9997-0.0246j,0.9973-0.0739j,0.9891-0.1473j,0.9698-0.2439j,0.9325-0.3612j,0.8691-0.4947j,0.7713-0.6365j,0.6317-0.7752j,0.4457-0.8952j,0.2139-0.9768j,-0.0554-0.9985j,-0.3439-0.9390j,-0.6221-0.7829j,-0.8502-0.5264j,-0.9830-0.1837j,-0.9781+0.2079j,-0.8090+0.5878j,-0.4785+0.8781j,-0.0308+0.9995j,0.4457+0.8952j,0.8302+0.5575j,0.9988+0.0493j,0.8691-0.4947j,0.4457-0.8952j,-0.1534-0.9882j,-0.7136-0.7005j,-0.9939-0.1107j,-0.8370+0.5472j,-0.2737+0.9618j,0.4457+0.8952j,0.9411+0.3382j,0.9032-0.4291j,0.3090-0.9511j,-0.5000-0.8660j,-0.9830-0.1837j,-0.7634+0.6459j,0.0431+0.9991j,0.8302+0.5575j,0.9325-0.3612j,0.2139-0.9768j,-0.7136-0.7005j,-0.9667+0.2558j,-0.2499+0.9683j,0.7390+0.6737j,0.9325-0.3612j,0.0677-0.9977j,-0.8868-0.4622j,-0.7634+0.6459j,0.3324+0.9432j,1.0000+0.0000j,0.3090-0.9511j,-0.8233-0.5677j,-0.7634+0.6459j,0.4457+0.8952j,0.9698-0.2439j,-0.0554-0.9985j,-0.9939-0.1107j,-0.2499+0.9683j,0.9325+0.3612j,0.4457-0.8952j,-0.8629-0.5053j,-0.5421+0.8403j,0.8302+0.5575j,0.5524-0.8336j,-0.8502-0.5264j,-0.4785+0.8781j,0.9135+0.4067j,0.3090-0.9511j,-0.9830-0.1837j,-0.0308+0.9995j,0.9891-0.1473j,-0.3439-0.9390j,-0.8370+0.5472j,0.7390+0.6737j,0.4457-0.8952j,-0.9872-0.1595j,0.1656+0.9862j,0.8691-0.4947j,-0.7791-0.6269j,-0.2737+0.9618j,0.9891-0.1473j,-0.5626-0.8267j,-0.4785+0.8781j,1.0000+0.0000j,-0.5000-0.8660j,-0.4785+0.8781j,0.9973-0.0739j,-0.6221-0.7829j,-0.2737+0.9618j,0.9325-0.3612j,-0.8629-0.5053j,0.1656+0.9862j,0.6317-0.7752j,-0.9981+0.0616j,0.7390+0.6737j,-0.0554-0.9985j,-0.6412+0.7674j,0.9891-0.1473j,-0.8502-0.5264j,0.3324+0.9432j,0.3090-0.9511j,-0.8090+0.5878j,0.9997-0.0246j,-0.8502-0.5264j,0.4457+0.8952j,0.0677-0.9977j,-0.5421+0.8403j,0.8691-0.4947j,-0.9981+0.0616j,0.9325+0.3612j,-0.7136-0.7005j,0.4011+0.9160j,-0.0554-0.9985j,-0.2737+0.9618j,0.5524-0.8336j,-0.7634+0.6459j,0.9032-0.4291j,-0.9781+0.2079j,1.0000+0.0000j,-0.9830-0.1837j,0.9411+0.3382j,-0.8868-0.4622j,0.8302+0.5575j,-0.7791-0.6269j,0.7390+0.6737j,-0.7136-0.7005j,0.7049+0.7093j,-0.7136-0.7005j,0.7390+0.6737j,-0.7791-0.6269j,0.8302+0.5575j,-0.8868-0.4622j,0.9411+0.3382j,-0.9830-0.1837j,1.0000+0.0000j,-0.9781+0.2079j,0.9032-0.4291j,-0.7634+0.6459j,0.5524-0.8336j,-0.2737+0.9618j,-0.0554-0.9985j,0.4011+0.9160j,-0.7136-0.7005j,0.9325+0.3612j,-0.9981+0.0616j,0.8691-0.4947j,-0.5421+0.8403j,0.0677-0.9977j,0.4457+0.8952j,-0.8502-0.5264j,0.9997-0.0246j,-0.8090+0.5878j,0.3090-0.9511j,0.3324+0.9432j,-0.8502-0.5264j,0.9891-0.1473j,-0.6412+0.7674j,-0.0554-0.9985j,0.7390+0.6737j,-0.9981+0.0616j,0.6317-0.7752j,0.1656+0.9862j,-0.8629-0.5053j,0.9325-0.3612j,-0.2737+0.9618j,-0.6221-0.7829j,0.9973-0.0739j,-0.4785+0.8781j,-0.5000-0.8660j,1.0000+0.0000j,-0.4785+0.8781j,-0.5626-0.8267j,0.9891-0.1473j,-0.2737+0.9618j,-0.7791-0.6269j,0.8691-0.4947j,0.1656+0.9862j,-0.9872-0.1595j,0.4457-0.8952j,0.7390+0.6737j,-0.8370+0.5472j,-0.3439-0.9390j,0.9891-0.1473j,-0.0308+0.9995j,-0.9830-0.1837j,0.3090-0.9511j,0.9135+0.4067j,-0.4785+0.8781j,-0.8502-0.5264j,0.5524-0.8336j,0.8302+0.5575j,-0.5421+0.8403j,-0.8629-0.5053j,0.4457-0.8952j,0.9325+0.3612j,-0.2499+0.9683j,-0.9939-0.1107j,-0.0554-0.9985j,0.9698-0.2439j,0.4457+0.8952j,-0.7634+0.6459j,-0.8233-0.5677j,0.3090-0.9511j,1.0000+0.0000j,0.3324+0.9432j,-0.7634+0.6459j,-0.8868-0.4622j,0.0677-0.9977j,0.9325-0.3612j,0.7390+0.6737j,-0.2499+0.9683j,-0.9667+0.2558j,-0.7136-0.7005j,0.2139-0.9768j,0.9325-0.3612j,0.8302+0.5575j,0.0431+0.9991j,-0.7634+0.6459j,-0.9830-0.1837j,-0.5000-0.8660j,0.3090-0.9511j,0.9032-0.4291j,0.9411+0.3382j,0.4457+0.8952j,-0.2737+0.9618j,-0.8370+0.5472j,-0.9939-0.1107j,-0.7136-0.7005j,-0.1534-0.9882j,0.4457-0.8952j,0.8691-0.4947j,0.9988+0.0493j,0.8302+0.5575j,0.4457+0.8952j,-0.0308+0.9995j,-0.4785+0.8781j,-0.8090+0.5878j,-0.9781+0.2079j,-0.9830-0.1837j,-0.8502-0.5264j,-0.6221-0.7829j,-0.3439-0.9390j,-0.0554-0.9985j,0.2139-0.9768j,0.4457-0.8952j,0.6317-0.7752j,0.7713-0.6365j,0.8691-0.4947j,0.9325-0.3612j,0.9698-0.2439j,0.9891-0.1473j,0.9973-0.0739j,0.9997-0.0246j,1.0000+0.0000j)
+    value: '[1,1,1,1,1,-1,-1,1,1,-1,1,-1,1] + [0.5]*50 + [0]*100'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [464, 16.0]
+    coordinate: [456, 16.0]
     rotation: 0
     state: enabled
 - name: enable_2
@@ -251,7 +251,7 @@ blocks:
     bus_structure: null
     coordinate: [544, 1176.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_complex_to_float_0
   id: blocks_complex_to_float
   parameters:
@@ -297,23 +297,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1096, 1272.0]
+    coordinate: [1168, 1344.0]
     rotation: 0
     state: enabled
-- name: blocks_multiply_conjugate_cc_0
-  id: blocks_multiply_conjugate_cc
+- name: blocks_moving_average_xx_0
+  id: blocks_moving_average_xx
   parameters:
     affinity: ''
     alias: ''
     comment: ''
+    length: '4000'
+    max_iter: '4000'
     maxoutbuf: '0'
     minoutbuf: '0'
-    vlen: '256'
+    scale: 1/4000
+    type: complex
+    vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1224, 792.0]
+    coordinate: [776, 1360.0]
     rotation: 0
     state: enabled
 - name: blocks_null_source_0
@@ -355,7 +359,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 320.0]
+    coordinate: [688, 328.0]
     rotation: 0
     state: enabled
 - name: blocks_selector_0_0
@@ -378,7 +382,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [928, 240.0]
+    coordinate: [872, 232.0]
     rotation: 0
     state: enabled
 - name: blocks_selector_0_0_0
@@ -401,7 +405,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1080, 472.0]
+    coordinate: [1056, 472.0]
     rotation: 0
     state: enabled
 - name: blocks_selector_0_0_1
@@ -473,42 +477,6 @@ blocks:
     coordinate: [424, 792.0]
     rotation: 0
     state: enabled
-- name: blocks_stream_to_vector_0_0
-  id: blocks_stream_to_vector
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_items: '256'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [608, 1040.0]
-    rotation: 0
-    state: enabled
-- name: blocks_stream_to_vector_0_0_0
-  id: blocks_stream_to_vector
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_items: '256'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [824, 712.0]
-    rotation: 0
-    state: enabled
 - name: blocks_throttle2_0
   id: blocks_throttle2
   parameters:
@@ -529,7 +497,7 @@ blocks:
     bus_structure: null
     coordinate: [336, 1120.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_throttle2_0_0
   id: blocks_throttle2
   parameters:
@@ -550,7 +518,7 @@ blocks:
     bus_structure: null
     coordinate: [328, 1240.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_throttle2_1
   id: blocks_throttle2
   parameters:
@@ -571,7 +539,7 @@ blocks:
     bus_structure: null
     coordinate: [1504, 176.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_throttle2_1_0
   id: blocks_throttle2
   parameters:
@@ -592,7 +560,7 @@ blocks:
     bus_structure: null
     coordinate: [1616, 472.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_vector_source_x_2
   id: blocks_vector_source_x
   parameters:
@@ -653,44 +621,6 @@ blocks:
     coordinate: [272, 552.0]
     rotation: 0
     state: enabled
-- name: blocks_vector_source_x_2_1
-  id: blocks_vector_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    repeat: 'True'
-    tags: '[]'
-    type: complex
-    vector: csi_src
-    vlen: '256'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [816, 888.0]
-    rotation: 0
-    state: enabled
-- name: blocks_vector_to_stream_0
-  id: blocks_vector_to_stream
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_items: '256'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1640, 832.0]
-    rotation: 0
-    state: enabled
 - name: channels_channel_model_0_0
   id: channels_channel_model
   parameters:
@@ -730,7 +660,25 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1808, 512.0]
+    coordinate: [1800, 488.0]
+    rotation: 0
+    state: disabled
+- name: digital_costas_loop_cc_0
+  id: digital_costas_loop_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    order: '1'
+    use_snr: 'False'
+    w: 1/100*pi
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [984, 1400.0]
     rotation: 0
     state: disabled
 - name: epy_block_0
@@ -748,15 +696,13 @@ blocks:
       \ = pmt.intern(\"csi_in\")\n        self.message_port_register_in(self.port_name)\n\
       \        self.set_msg_handler(self.port_name, self.handle_msg)\n\n    def handle_msg(self,\
       \ msg):\n        if pmt.is_complex(msg):\n            h_val = pmt.to_complex(msg)\n\
-      \            \n            # Pure Zero-Forcing: w = 1 / H\n            # We\
-      \ use a tiny safeguard just to prevent a python crash if H is exactly 0\n  \
-      \          if np.abs(h_val) > 1e-12:\n                raw_weight = 1.0 / h_val\n\
-      \            else:\n                raw_weight = 0.0 + 0.0j\n              \
-      \  \n            self.precoder_weight = np.complex64(raw_weight)\n\n    def\
-      \ work(self, input_items, output_items):\n        in0 = input_items[0]\n   \
-      \     out = output_items[0]\n        \n        # Multiply the gradients by the\
-      \ newest 1/H weight\n        out[:] = in0 * self.precoder_weight\n        \n\
-      \        return len(out)\n"
+      \            \n            # Pure Zero-Forcing: w = 1 / H\n            if np.abs(h_val)\
+      \ > 1e-12:\n                raw_weight = 1.0 / h_val\n            else:\n  \
+      \              raw_weight = 0.0 + 0.0j\n                \n            self.precoder_weight\
+      \ = np.complex64(raw_weight)\n\n    def work(self, input_items, output_items):\n\
+      \        in0 = input_items[0]\n        out = output_items[0]\n        \n   \
+      \     # Multiply the gradients by the newest 1/H weight\n        out[:] = in0\
+      \ * self.precoder_weight\n        \n        return len(out)\n"
     affinity: ''
     alias: ''
     comment: ''
@@ -777,110 +723,6 @@ blocks:
   id: epy_block
   parameters:
     _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\n\nclass\
-      \ blk(gr.sync_block):\n    def __init__(self, fft_size=256, u=1, threshold_factor=4.0,\
-      \ is_estimating=0):\n        gr.sync_block.__init__(\n            self,\n  \
-      \          name='Integrated ZC Estimator',\n            in_sig=[(np.complex64,\
-      \ fft_size)],\n            out_sig=[np.complex64]\n        )\n        self.fft_size\
-      \ = fft_size\n        self.u = u\n        self.threshold_factor = threshold_factor\n\
-      \        self.is_estimating = is_estimating\n        self.last_state = is_estimating\n\
-      \n        # 1. Generate Local Reference\n        n = np.arange(fft_size)\n \
-      \       zc = np.exp(-1j * np.pi * self.u * n * (n + 1) / fft_size).astype(np.complex64)\n\
-      \        \n        # 2. Pre-calculate Reference FFT and conjugate it\n     \
-      \   # This replicates the 'Multiply Conjugate' block behavior\n        self.ref_fft_conj\
-      \ = np.conj(np.fft.fft(zc))\n        \n        self.current_h = 1.0 + 0.0j\n\
-      \        self.estimates_buffer = []\n        self.port_name = pmt.intern(\"\
-      csi_out\")\n        self.message_port_register_out(self.port_name)\n\n    def\
-      \ work(self, input_items, output_items):\n        in_vecs = input_items[0]\n\
-      \        out = output_items[0]\n\n        if self.last_state == 0 and self.is_estimating\
-      \ == 1:\n            self.estimates_buffer = []\n        \n        if self.last_state\
-      \ == 1 and self.is_estimating == 0:\n            if self.estimates_buffer:\n\
-      \                weights = np.linspace(0.2, 1.0, len(self.estimates_buffer))\n\
-      \                self.current_h = np.complex64(np.average(self.estimates_buffer,\
-      \ weights=weights))\n                self.message_port_pub(self.port_name, pmt.from_complex(self.current_h))\n\
-      \        \n        self.last_state = self.is_estimating\n\n        if self.is_estimating\
-      \ == 1:\n            for vec in in_vecs:\n                # 3. Replicate GRC\
-      \ Flow: FFT -> Mult Conj -> IFFT\n                sig_fft = np.fft.fft(vec)\n\
-      \                corr_fft = sig_fft * self.ref_fft_conj\n                \n\
-      \                # np.fft.ifft applies 1/N scaling automatically\n         \
-      \       impulse_response = np.fft.ifft(corr_fft)\n                \n       \
-      \         mags = np.abs(impulse_response)\n                peak_idx = np.argmax(mags)\n\
-      \                \n                if mags[peak_idx] > (self.threshold_factor\
-      \ * np.mean(mags)):\n                    # 4. Extract H\n                  \
-      \  # We do NOT divide by fft_size here because ifft() already did it.\n    \
-      \                # If magnitude is still > 1.0, your transmitter has extra gain.\n\
-      \                    h_est = impulse_response[peak_idx]\n                  \
-      \  \n                    self.estimates_buffer.append(h_est)\n             \
-      \       self.current_h = np.complex64(h_est)\n\n        # Output to Number Sink\n\
-      \        out[:] = self.current_h\n        return len(out)\n"
-    affinity: ''
-    alias: ''
-    comment: ''
-    fft_size: '256'
-    is_estimating: csi_mode
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    threshold_factor: threshold_2
-    u: '1'
-  states:
-    _io_cache: ('Integrated ZC Estimator', 'blk', [('fft_size', '256'), ('u', '1'),
-      ('threshold_factor', '4.0'), ('is_estimating', '0')], [('0', 'complex', 256)],
-      [('0', 'complex', 1), ('csi_out', 'message', 1)], '', ['fft_size', 'is_estimating',
-      'threshold_factor', 'u'])
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [736, 1120.0]
-    rotation: 0
-    state: enabled
-- name: epy_block_0_0_0
-  id: epy_block
-  parameters:
-    _source_code: "import numpy as np\nimport pmt\nfrom gnuradio import gr\n\n\nclass\
-      \ blk(gr.sync_block):\n\n    def __init__(self, fft_size=256, threshold=0.1):\n\
-      \        gr.sync_block.__init__(\n            self,\n            name='CSI Reader',\n\
-      \            in_sig=[(np.complex64, fft_size)],\n            out_sig=[(np.complex64,\
-      \ fft_size)]  # Vector output\n        )\n\n        self.fft_size = fft_size\n\
-      \        self.threshold = threshold\n\n        # Message output port\n     \
-      \   self.port_id = pmt.intern(\"csi_msg\")\n        self.message_port_register_out(self.port_id)\n\
-      \n    def work(self, input_items, output_items):\n\n        in_vectors = input_items[0]\n\
-      \        out_vectors = output_items[0]\n\n        n_vectors = len(in_vectors)\n\
-      \n        for i in range(n_vectors):\n\n            vec = in_vectors[i]\n\n\
-      \            # Pass-through for debugging/sinks\n            out_vectors[i][:]\
-      \ = vec\n\n            mags = np.abs(vec)\n            peak_idx = np.argmax(mags)\n\
-      \            peak_mag = mags[peak_idx]\n\n            norm_metric = peak_mag\
-      \ / (np.mean(mags) + 1e-12)\n            if norm_metric > self.threshold:\n\n\
-      \                peak_complex = vec[peak_idx]\n                phase_rad = np.angle(peak_complex)\n\
-      \                phase_deg = np.degrees(phase_rad)\n\n                # ----\
-      \ Publish full CSI vector ----\n                csi_pmt = pmt.from_complex(peak_complex)\n\
-      \n                # Optional metadata\n                meta = pmt.make_dict()\n\
-      \                meta = pmt.dict_add(\n                    meta,\n         \
-      \           pmt.intern(\"peak_mag\"),\n                    pmt.from_double(float(peak_mag))\n\
-      \                )\n                meta = pmt.dict_add(\n                 \
-      \   meta,\n                    pmt.intern(\"phase_deg\"),\n                \
-      \    pmt.from_double(float(phase_deg))\n                )\n\n              \
-      \  msg = pmt.cons(meta, csi_pmt)\n\n                self.message_port_pub(self.port_id,\
-      \ msg)\n\n        return n_vectors\n"
-    affinity: ''
-    alias: ''
-    comment: ''
-    fft_size: '256'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    threshold: threshold_2
-  states:
-    _io_cache: ('CSI Reader', 'blk', [('fft_size', '256'), ('threshold', '0.1')],
-      [('0', 'complex', 256)], [('0', 'complex', 256), ('csi_msg', 'message', 1)],
-      '', ['fft_size', 'threshold'])
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1656, 680.0]
-    rotation: 0
-    state: enabled
-- name: epy_block_0_1
-  id: epy_block
-  parameters:
-    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\n\nclass\
       \ blk(gr.sync_block):\n    \"\"\"\n    Gradient CSI Precoder:\n    Takes an\
       \ input stream of complex gradients and multiplies them by 1/H,\n    where H\
       \ is the most recent channel state received via ZMQ.\n    \"\"\"\n    def __init__(self):\n\
@@ -892,15 +734,13 @@ blocks:
       \ = pmt.intern(\"csi_in\")\n        self.message_port_register_in(self.port_name)\n\
       \        self.set_msg_handler(self.port_name, self.handle_msg)\n\n    def handle_msg(self,\
       \ msg):\n        if pmt.is_complex(msg):\n            h_val = pmt.to_complex(msg)\n\
-      \            \n            # Pure Zero-Forcing: w = 1 / H\n            # We\
-      \ use a tiny safeguard just to prevent a python crash if H is exactly 0\n  \
-      \          if np.abs(h_val) > 1e-12:\n                raw_weight = 1.0 / h_val\n\
-      \            else:\n                raw_weight = 0.0 + 0.0j\n              \
-      \  \n            self.precoder_weight = np.complex64(raw_weight)\n\n    def\
-      \ work(self, input_items, output_items):\n        in0 = input_items[0]\n   \
-      \     out = output_items[0]\n        \n        # Multiply the gradients by the\
-      \ newest 1/H weight\n        out[:] = in0 * self.precoder_weight\n        \n\
-      \        return len(out)\n"
+      \            \n            # Pure Zero-Forcing: w = 1 / H\n            if np.abs(h_val)\
+      \ > 1e-12:\n                raw_weight = 1.0 / h_val\n            else:\n  \
+      \              raw_weight = 0.0 + 0.0j\n                \n            self.precoder_weight\
+      \ = np.complex64(raw_weight)\n\n    def work(self, input_items, output_items):\n\
+      \        in0 = input_items[0]\n        out = output_items[0]\n        \n   \
+      \     # Multiply the gradients by the newest 1/H weight\n        out[:] = in0\
+      \ * self.precoder_weight\n        \n        return len(out)\n"
     affinity: ''
     alias: ''
     comment: ''
@@ -914,70 +754,127 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [552, 584.0]
+    coordinate: [544, 584.0]
     rotation: 0
     state: enabled
-- name: fft_vxx_0
-  id: fft_vxx
+- name: epy_block_0_0_0
+  id: epy_block
   parameters:
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\n\nclass\
+      \ blk(gr.sync_block):\n    \"\"\"\n    Channel State Estimator:\n    Runs correlation\
+      \ continuously to avoid buffer dropouts.\n    Updates H while is_estimating\
+      \ is 1. \n    Publishes H via ZMQ only once when is_estimating transitions from\
+      \ 1 to 0.\n    \"\"\"\n    def __init__(self, threshold=0.5, is_estimating=0):\n\
+      \        gr.sync_block.__init__(\n            self,\n            name='Channel\
+      \ State Estimator (Triggered)',\n            in_sig=[np.complex64],\n      \
+      \      out_sig=[np.complex64]\n        )\n        self.threshold_factor = threshold\n\
+      \        self.is_estimating = is_estimating\n        self.last_state = is_estimating\n\
+      \        \n        self.barker = np.array([1,1,1,1,1,-1,-1,1,1,-1,1,-1,1], dtype=np.complex64)\n\
+      \        self.matched_filter = np.conj(np.flip(self.barker))\n        self.ideal_peak_val\
+      \ = np.sum(np.abs(self.barker)**2)\n        \n        self.current_h = 1.0 +\
+      \ 0.0j\n        self.has_valid_estimate = False # <-- NEW: Safeguard against\
+      \ bad ZMQ publishes\n        \n        self.port_name = pmt.intern(\"csi_out\"\
+      )\n        self.message_port_register_out(self.port_name)\n        self.set_history(len(self.barker))\n\
+      \n    def work(self, input_items, output_items):\n        in0 = input_items[0]\n\
+      \        out = output_items[0]\n        \n        # 1. ALWAYS run the correlation\
+      \ to process the GNU Radio buffer\n        # This prevents missing delayed samples\
+      \ when the async variable toggles\n        corr = np.convolve(in0, self.matched_filter,\
+      \ mode='valid')\n        \n        if len(corr) > 0:\n            mags = np.abs(corr)\n\
+      \            peak_idx = np.argmax(mags)\n            actual_threshold = self.threshold_factor\
+      \ * self.ideal_peak_val\n            \n            # Only update H if we found\
+      \ a peak AND we are supposed to be estimating\n            if mags[peak_idx]\
+      \ > actual_threshold and self.is_estimating == 1:\n                new_h_estimate\
+      \ = corr[peak_idx] / self.ideal_peak_val\n                \n               \
+      \ # First estimate snaps directly to the value instead of smoothing with 1.0+0j\n\
+      \                if not self.has_valid_estimate:\n                    self.current_h\
+      \ = new_h_estimate\n                    self.has_valid_estimate = True\n   \
+      \             else:\n                    self.current_h = (0.4 * new_h_estimate)\
+      \ + (0.6 * self.current_h)\n\n        # 2. Edge Detection: Did we just STOP\
+      \ estimating? (1 -> 0)\n        if self.last_state == 1 and self.is_estimating\
+      \ == 0:\n            if self.has_valid_estimate:\n                msg = pmt.from_complex(self.current_h)\n\
+      \                self.message_port_pub(self.port_name, msg)\n              \
+      \  print(f\"[CSI] Phase Ended. Final H Published: {self.current_h}\")\n    \
+      \        else:\n                print(\"[CSI] Error: Phase Ended, but no valid\
+      \ Barker peak was found in the buffer!\")\n\n        # 3. Update the state tracker\n\
+      \        self.last_state = self.is_estimating\n\n        out[:] = self.current_h\n\
+      \        return len(out)\n"
     affinity: ''
     alias: ''
     comment: ''
-    fft_size: '256'
-    forward: 'True'
+    is_estimating: csi_mode
     maxoutbuf: '0'
     minoutbuf: '0'
-    nthreads: '1'
-    shift: 'False'
-    type: complex
-    window: window.rectangular(256)
+    threshold: threshold_2
   states:
+    _io_cache: ('Channel State Estimator (Triggered)', 'blk', [('threshold', '0.5'),
+      ('is_estimating', '0')], [('0', 'complex', 1)], [('0', 'complex', 1), ('csi_out',
+      'message', 1)], '\n    Channel State Estimator:\n    Runs correlation continuously
+      to avoid buffer dropouts.\n    Updates H while is_estimating is 1. \n    Publishes
+      H via ZMQ only once when is_estimating transitions from 1 to 0.\n    ', ['is_estimating'])
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1000, 720.0]
+    coordinate: [1088, 784.0]
     rotation: 0
     state: enabled
-- name: fft_vxx_0_0
-  id: fft_vxx
+- name: epy_block_0_0_0_0
+  id: epy_block
   parameters:
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\n\nclass\
+      \ blk(gr.sync_block):\n    \"\"\"\n    Channel State Estimator:\n    Runs correlation\
+      \ continuously to avoid buffer dropouts.\n    Updates H while is_estimating\
+      \ is 1. \n    Publishes H via ZMQ only once when is_estimating transitions from\
+      \ 1 to 0.\n    \"\"\"\n    def __init__(self, threshold=0.5, is_estimating=0):\n\
+      \        gr.sync_block.__init__(\n            self,\n            name='Channel\
+      \ State Estimator (Triggered)',\n            in_sig=[np.complex64],\n      \
+      \      out_sig=[np.complex64]\n        )\n        self.threshold_factor = threshold\n\
+      \        self.is_estimating = is_estimating\n        self.last_state = is_estimating\n\
+      \        \n        self.barker = np.array([1,1,1,1,1,-1,-1,1,1,-1,1,-1,1], dtype=np.complex64)\n\
+      \        self.matched_filter = np.conj(np.flip(self.barker))\n        self.ideal_peak_val\
+      \ = np.sum(np.abs(self.barker)**2)\n        \n        self.current_h = 1.0 +\
+      \ 0.0j\n        self.has_valid_estimate = False # <-- NEW: Safeguard against\
+      \ bad ZMQ publishes\n        \n        self.port_name = pmt.intern(\"csi_out\"\
+      )\n        self.message_port_register_out(self.port_name)\n        self.set_history(len(self.barker))\n\
+      \n    def work(self, input_items, output_items):\n        in0 = input_items[0]\n\
+      \        out = output_items[0]\n        \n        # 1. ALWAYS run the correlation\
+      \ to process the GNU Radio buffer\n        # This prevents missing delayed samples\
+      \ when the async variable toggles\n        corr = np.convolve(in0, self.matched_filter,\
+      \ mode='valid')\n        \n        if len(corr) > 0:\n            mags = np.abs(corr)\n\
+      \            peak_idx = np.argmax(mags)\n            actual_threshold = self.threshold_factor\
+      \ * self.ideal_peak_val\n            \n            # Only update H if we found\
+      \ a peak AND we are supposed to be estimating\n            if mags[peak_idx]\
+      \ > actual_threshold and self.is_estimating == 1:\n                new_h_estimate\
+      \ = corr[peak_idx] / self.ideal_peak_val\n                \n               \
+      \ # First estimate snaps directly to the value instead of smoothing with 1.0+0j\n\
+      \                if not self.has_valid_estimate:\n                    self.current_h\
+      \ = new_h_estimate\n                    self.has_valid_estimate = True\n   \
+      \             else:\n                    self.current_h = (0.4 * new_h_estimate)\
+      \ + (0.6 * self.current_h)\n\n        # 2. Edge Detection: Did we just STOP\
+      \ estimating? (1 -> 0)\n        if self.last_state == 1 and self.is_estimating\
+      \ == 0:\n            if self.has_valid_estimate:\n                msg = pmt.from_complex(self.current_h)\n\
+      \                self.message_port_pub(self.port_name, msg)\n              \
+      \  print(f\"[CSI] Phase Ended. Final H Published: {self.current_h}\")\n    \
+      \        else:\n                print(\"[CSI] Error: Phase Ended, but no valid\
+      \ Barker peak was found in the buffer!\")\n\n        # 3. Update the state tracker\n\
+      \        self.last_state = self.is_estimating\n\n        out[:] = self.current_h\n\
+      \        return len(out)\n"
     affinity: ''
     alias: ''
     comment: ''
-    fft_size: '256'
-    forward: 'True'
+    is_estimating: csi_mode
     maxoutbuf: '0'
     minoutbuf: '0'
-    nthreads: '1'
-    shift: 'False'
-    type: complex
-    window: window.rectangular(256)
+    threshold: threshold_2
   states:
+    _io_cache: ('Channel State Estimator (Triggered)', 'blk', [('threshold', '0.5'),
+      ('is_estimating', '0')], [('0', 'complex', 1)], [('0', 'complex', 1), ('csi_out',
+      'message', 1)], '\n    Channel State Estimator:\n    Runs correlation continuously
+      to avoid buffer dropouts.\n    Updates H while is_estimating is 1. \n    Publishes
+      H via ZMQ only once when is_estimating transitions from 1 to 0.\n    ', ['is_estimating'])
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1000, 880.0]
-    rotation: 0
-    state: enabled
-- name: fft_vxx_0_1
-  id: fft_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    fft_size: '256'
-    forward: 'False'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    nthreads: '1'
-    shift: 'False'
-    type: complex
-    window: window.rectangular(256)
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [1400, 720.0]
+    coordinate: [784, 968.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -2149,7 +2046,7 @@ blocks:
     comment: ''
     dev_addr: '"addr=192.168.10.2"'
     dev_args: ''
-    gain0: '15'
+    gain0: '25'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -2312,7 +2209,7 @@ blocks:
     bus_structure: null
     coordinate: [1176, 172.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: uhd_usrp_sink_0_0
   id: uhd_usrp_sink
   parameters:
@@ -2426,7 +2323,7 @@ blocks:
     comment: ''
     dev_addr: '"addr=192.168.10.4"'
     dev_args: ''
-    gain0: '15'
+    gain0: '25'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -2589,7 +2486,7 @@ blocks:
     bus_structure: null
     coordinate: [1360, 356.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: uhd_usrp_source_0
   id: uhd_usrp_source
   parameters:
@@ -2767,7 +2664,7 @@ blocks:
     dc_offs_enb9: default
     dev_addr: '"addr=192.168.10.3"'
     dev_args: ''
-    gain0: '15'
+    gain0: '25'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -3023,9 +2920,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [72, 788.0]
+    coordinate: [80, 788.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: virtual_sink_0
   id: virtual_sink
   parameters:
@@ -3038,7 +2935,7 @@ blocks:
     bus_structure: null
     coordinate: [2048, 224.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: virtual_sink_0_0
   id: virtual_sink
   parameters:
@@ -3051,7 +2948,7 @@ blocks:
     bus_structure: null
     coordinate: [1992, 464.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: virtual_source_0
   id: virtual_source
   parameters:
@@ -3064,7 +2961,7 @@ blocks:
     bus_structure: null
     coordinate: [152, 1128.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: virtual_source_0_0
   id: virtual_source
   parameters:
@@ -3077,7 +2974,7 @@ blocks:
     bus_structure: null
     coordinate: [160, 1248.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: zeromq_pub_msg_sink_0
   id: zeromq_pub_msg_sink
   parameters:
@@ -3091,7 +2988,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1888, 632.0]
+    coordinate: [1712, 912.0]
     rotation: 0
     state: enabled
 - name: zeromq_pub_msg_sink_0_0
@@ -3107,7 +3004,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 1216.0]
+    coordinate: [880, 1120.0]
     rotation: 0
     state: enabled
 - name: zeromq_sub_msg_source_0
@@ -3155,7 +3052,8 @@ connections:
 - [blocks_complex_to_float_0_0, '1', qtgui_number_sink_1_0_0_0_0, '0']
 - [blocks_complex_to_float_0_0_0, '0', qtgui_number_sink_1_0_1_0_0, '0']
 - [blocks_complex_to_float_0_0_0, '1', qtgui_number_sink_1_0_0_0_0_0, '0']
-- [blocks_multiply_conjugate_cc_0, '0', fft_vxx_0_1, '0']
+- [blocks_moving_average_xx_0, '0', blocks_complex_to_float_0_0_0, '0']
+- [blocks_moving_average_xx_0, '0', digital_costas_loop_cc_0, '0']
 - [blocks_null_source_0, '0', blocks_selector_0_0, '0']
 - [blocks_null_source_0, '0', blocks_selector_0_0_0, '0']
 - [blocks_selector_0, '0', blocks_selector_0_0, '1']
@@ -3167,36 +3065,28 @@ connections:
 - [blocks_selector_0_0_0, '0', qtgui_freq_sink_x_0_0, '0']
 - [blocks_selector_0_0_0, '0', qtgui_time_sink_x_2_0, '0']
 - [blocks_selector_0_0_0, '0', uhd_usrp_sink_0_0, '0']
-- [blocks_selector_0_0_1, '0', blocks_stream_to_vector_0_0_0, '0']
-- [blocks_selector_0_0_1, '1', blocks_stream_to_vector_0_0, '0']
+- [blocks_selector_0_0_1, '0', epy_block_0_0_0, '0']
+- [blocks_selector_0_0_1, '1', epy_block_0_0_0_0, '0']
 - [blocks_selector_0_1, '0', blocks_selector_0_0_0, '1']
-- [blocks_selector_0_2, '0', blocks_complex_to_float_0_0_0, '0']
+- [blocks_selector_0_2, '0', blocks_moving_average_xx_0, '0']
 - [blocks_selector_0_2, '1', blocks_selector_0_0_1, '0']
-- [blocks_stream_to_vector_0_0, '0', epy_block_0_0, '0']
-- [blocks_stream_to_vector_0_0_0, '0', fft_vxx_0, '0']
 - [blocks_throttle2_0, '0', blocks_add_xx_0, '0']
 - [blocks_throttle2_0_0, '0', blocks_add_xx_0, '1']
 - [blocks_throttle2_1, '0', channels_channel_model_0_0, '0']
-- [blocks_throttle2_1, '0', virtual_sink_0, '0']
 - [blocks_throttle2_1_0, '0', channels_channel_model_0_0_0, '0']
-- [blocks_throttle2_1_0, '0', virtual_sink_0_0, '0']
 - [blocks_vector_source_x_2, '0', blocks_selector_0, '1']
 - [blocks_vector_source_x_2, '0', blocks_selector_0_1, '1']
 - [blocks_vector_source_x_2_0, '0', epy_block_0, '0']
-- [blocks_vector_source_x_2_0_0, '0', epy_block_0_1, '0']
-- [blocks_vector_source_x_2_1, '0', fft_vxx_0_0, '0']
-- [blocks_vector_to_stream_0, '0', blocks_complex_to_float_0, '0']
+- [blocks_vector_source_x_2_0_0, '0', epy_block_0_0, '0']
 - [channels_channel_model_0_0, '0', virtual_sink_0, '0']
 - [channels_channel_model_0_0_0, '0', virtual_sink_0_0, '0']
+- [digital_costas_loop_cc_0, '0', blocks_complex_to_float_0_0_0, '0']
 - [epy_block_0, '0', blocks_selector_0, '0']
-- [epy_block_0_0, '0', blocks_complex_to_float_0_0, '0']
-- [epy_block_0_0, csi_out, zeromq_pub_msg_sink_0_0, in]
-- [epy_block_0_0_0, '0', blocks_vector_to_stream_0, '0']
-- [epy_block_0_0_0, csi_msg, zeromq_pub_msg_sink_0, in]
-- [epy_block_0_1, '0', blocks_selector_0_1, '0']
-- [fft_vxx_0, '0', blocks_multiply_conjugate_cc_0, '0']
-- [fft_vxx_0_0, '0', blocks_multiply_conjugate_cc_0, '1']
-- [fft_vxx_0_1, '0', epy_block_0_0_0, '0']
+- [epy_block_0_0, '0', blocks_selector_0_1, '0']
+- [epy_block_0_0_0, '0', blocks_complex_to_float_0, '0']
+- [epy_block_0_0_0, csi_out, zeromq_pub_msg_sink_0, in]
+- [epy_block_0_0_0_0, '0', blocks_complex_to_float_0_0, '0']
+- [epy_block_0_0_0_0, csi_out, zeromq_pub_msg_sink_0_0, in]
 - [uhd_usrp_source_0, '0', blocks_selector_0_2, '0']
 - [uhd_usrp_source_0, '0', qtgui_const_sink_x_0, '0']
 - [uhd_usrp_source_0, '0', qtgui_freq_sink_x_0_0_0, '0']
@@ -3204,7 +3094,7 @@ connections:
 - [virtual_source_0, '0', blocks_throttle2_0, '0']
 - [virtual_source_0_0, '0', blocks_throttle2_0_0, '0']
 - [zeromq_sub_msg_source_0, out, epy_block_0, csi_in]
-- [zeromq_sub_msg_source_0_1, out, epy_block_0_1, csi_in]
+- [zeromq_sub_msg_source_0_1, out, epy_block_0_0, csi_in]
 
 metadata:
   file_format: 1
