@@ -14,6 +14,9 @@ class USRP_X310():
         self.rx_channels = {}
         self._rx_streamer = None
         self._tx_streamer = None
+        # Antennas are on slot B (Radio#1) — map channel 0 to that slot
+        self.usrp.set_rx_subdev_spec(uhd.usrp.SubdevSpec("B:0"))
+        self.usrp.set_tx_subdev_spec(uhd.usrp.SubdevSpec("B:0"))
         # print("Connected to:", self.usrp.get_mboard_name())
 
     def set_rx(
@@ -25,7 +28,6 @@ class USRP_X310():
             antenna="RX2",   # Change to where antenna is 
             lo_offset: float = 0.0
         ):
-        self.usrp.set_rx_subdev_spec(uhd.usrp.SubdevSpec("B:0"), channel)
         self.usrp.set_rx_rate(samprate, channel)
         self.usrp.set_rx_freq(uhd.types.TuneRequest(freq, lo_offset), channel)
         self.usrp.set_rx_gain(gain, channel)
@@ -58,7 +60,6 @@ class USRP_X310():
             antenna="TX/RX",
             lo_offset: float = 0.0
         ):
-        self.usrp.set_tx_subdev_spec(uhd.usrp.SubdevSpec("B:0"), channel)
         self.usrp.set_tx_rate(samprate, channel)
         self.usrp.set_tx_freq(uhd.types.TuneRequest(freq, lo_offset), channel)
         self.usrp.set_tx_gain(gain, channel)

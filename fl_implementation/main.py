@@ -223,6 +223,24 @@ def main():
     output_dir = Path(args.output_dir) / args.experiment_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Tee stdout/stderr to log file
+    log_path = output_dir / "terminal.log"
+    log_file = open(log_path, "w")
+
+    class Tee:
+        def __init__(self, *streams):
+            self.streams = streams
+        def write(self, data):
+            for s in self.streams:
+                s.write(data)
+                s.flush()
+        def flush(self):
+            for s in self.streams:
+                s.flush()
+
+    sys.stdout = Tee(sys.__stdout__, log_file)
+    sys.stderr = Tee(sys.__stderr__, log_file)
+
     # Save config
     config_path = output_dir / "config.json"
     with open(config_path, "w") as f:

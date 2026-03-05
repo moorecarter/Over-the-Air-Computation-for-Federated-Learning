@@ -187,6 +187,9 @@ class OTAChannelModel:
         # In real OTA, would need proper pre-coding to align phases
         channel_gains = np.abs(fading_coeffs) * power_scales * np.cos(phase_errors)
 
+        for i in range(num_clients):
+            print(f"  Client {i}: magnitude={np.abs(fading_coeffs[i]):.6f}, channel_gain={channel_gains[i]:.6f}, power_scale={power_scales[i]:.6f}")
+
         # Effective weights after channel effects
         effective_weights = weights * channel_gains
         effective_weights = effective_weights / effective_weights.sum()  # Renormalize
@@ -340,17 +343,10 @@ class FedAvgOTA(FedAvg):
 
         num_clients = len(client_results)
 
-        # --- Channel estimation (real USRP): run once per round before aggregation ---
-        # Implement channel_estimate_callback to run pilots on your USRP and return
-        # a dict with keys e.g. "fading_coeffs", "phase_errors", "power_scales" (length num_clients).
-        channel_state: List[np.complex64] = None
-        if self.channel_estimate_callback is not None:
-            channel_state = self.channel_estimate_callback(num_clients, server_round)
-
         aggregated_ndarrays = []
         num_params = len(client_results[0][0])
 
-        # Flatten all parameter deltas per client into one vector per client
+        # Flatten all parameter deltas per client into one vector per client (pure numpy, no RF)
         param_shapes = [client_results[0][0][i].shape for i in range(num_params)]
 
         flat_deltas = []
@@ -360,6 +356,11 @@ class FedAvgOTA(FedAvg):
                 for i in range(num_params)
             ])
             flat_deltas.append(flat)
+
+        # Channel estimation AFTER flattening, right before transmission (minimizes CSI drift)
+        channel_state: List[np.complex64] = None
+        if self.channel_estimate_callback is not None:
+            channel_state = self.channel_estimate_callback(num_clients, server_round)
 
         if self.usrp_callback is not None:
             # === REAL OTA: single USRP transmission per round ===
@@ -375,7 +376,7 @@ class FedAvgOTA(FedAvg):
                 flat_deltas, weights
             )
 
-        print(f"[Round {server_round}] Aggregated[0:3]:     {np.array2string(aggregated_flat[:3], precision=6, separator=', ')}")
+        print(f"[Round {server_round}] Server aggregated delta[0:3]: {np.array2string(aggregated_flat[:3], precision=6, separator=', ')}")
 
         # Unflatten back into per-layer arrays
         offset = 0
