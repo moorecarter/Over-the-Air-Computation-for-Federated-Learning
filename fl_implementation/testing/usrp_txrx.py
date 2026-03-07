@@ -1,0 +1,267 @@
+from usrp_x310 import USRP_X310
+import numpy as np
+import threading
+import time
+from typing import List, Optional
+import math
+import uhd.libpyuhd.types
+import matplotlib.pyplot as plt
+
+def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
+            
+    if(math.gcd(N, u) != 1):
+        raise Exception("Please choose N and u such that they are coprime.")
+    
+    n = np.arange(N)
+    cf = N % 2
+    arg = -1j * (np.pi * u * n * (n + cf + 2 * q)) / N
+    x = np.exp(arg).astype(np.complex64)
+    return x
+
+KNOWN_PILOT = _generate_zadoff_chu(N=256, u=1, q=0) 
+SPS = 4  # Samples per symbol for RRC pulse shaping
+KNOWN_PILOT_WAVEFORM = USRP_X310.grad_to_wave(grads=KNOWN_PILOT, amplitude=1.0, sps=SPS)
+N_ZC = len(KNOWN_PILOT) # Length of Zadoff-Chu sequence (symbols)
+PILOT_WAVEFORM_LEN = len(KNOWN_PILOT_WAVEFORM) # Pilot length in samples (N_ZC * SPS)
+PILOT_ENERGY = np.sum(np.abs(KNOWN_PILOT_WAVEFORM)**2)
+_cal_grads = np.ones(256, dtype=np.float32)
+_cal_wave = USRP_X310.grad_to_wave(grads=_cal_grads, amplitude=1.0, sps=SPS)
+_cal_rrc = USRP_X310.rrc_filter(sps=SPS).astype(np.complex64)
+_cal_filtered = np.convolve(_cal_wave, _cal_rrc, mode='same')
+_cal_recovered = np.real(_cal_filtered[::SPS])
+_mid = len(_cal_recovered) // 4
+RRC_GAIN = float(np.mean(_cal_recovered[_mid:-_mid]))
+GUARD_LEN = 64   # Guard interval between pilot and data
+GRAD_CLIP = 0.7  # Global clip bound: all clients clip gradients to [-GRAD_CLIP, GRAD_CLIP]
+TX_AMPLITUDE = 0.5
+LO_OFFSET = 5e6
+FREQ = 2.45e9
+GAIN = 15
+
+_usrp_cache = {}
+def _get_usrp(ip_addr: str) -> USRP_X310:
+    if ip_addr not in _usrp_cache:
+        _usrp_cache[ip_addr] = USRP_X310(ip_addr=ip_addr)
+    return _usrp_cache[ip_addr]
+    
+#NEED TO LOOK THIS IMPL OVER 
+def init_all_usrps(server_addr: str, client_addrs: List[str]):
+    """Call once at startup before any rounds."""
+    all_usrps = [_get_usrp(server_addr)] + [_get_usrp(addr) for addr in client_addrs]
+    # ============================    CHANGE TO EXTERNAL WHEN OCTOCLOCK ADDED   ============================
+    for u in all_usrps:
+        u.set_clk(clk_source="external", time_source="external")
+        while not u.usrp.get_mboard_sensor("ref_locked").to_bool():
+            time.sleep(0.1)
+
+    # Wait for PPS edge, set time to 0 on all at the next PPS
+    time.sleep(1.1) 
+    for u in all_usrps:
+        u.usrp.set_time_next_pps(uhd.libpyuhd.types.time_spec(0.0))
+
+    # Wait for that PPS
+    time.sleep(1.1)
+    # USRPS have T=0
+
+    # Pre-configure RX on server, TX on clients so radios are ready before round 1
+
+    server = _get_usrp(server_addr)
+    server.set_rx(freq=FREQ, samprate=1e6, gain=GAIN, channel=0, antenna="TX/RX", lo_offset=LO_OFFSET)
+    for addr in client_addrs:
+        _get_usrp(addr).set_tx(freq=FREQ, samprate=1e6, gain=GAIN, channel=0, antenna="TX/RX", lo_offset=LO_OFFSET)
+    time.sleep(0.5)  # Let radios settle
+
+def usrp_channel_estimation(
+    num_clients: int,
+    server_round: int,
+    server_usrp_addr: str,
+    client_usrp_addr: List[str],
+):
+    # print("Starting USRP channel estimation...")
+    csi = np.ones(num_clients, dtype=np.complex64)
+
+    server_usrp = _get_usrp(server_usrp_addr)
+    if not server_usrp.rx_channels:
+        server_usrp.set_rx(freq=FREQ, samprate=1e6, gain=GAIN, channel=0, antenna="TX/RX", lo_offset=LO_OFFSET)
+    rx_symbols = None
+
+    for client_idx in range(num_clients):
+        rx_symbols = None
+        client_usrp = _get_usrp(client_usrp_addr[client_idx])
+        if not client_usrp.tx_channels:
+            client_usrp.set_tx(freq=FREQ, samprate=1e6, gain=GAIN, channel=0, antenna="TX/RX", lo_offset=LO_OFFSET)
+
+        # Use timed commands so RX and TX start at exactly the same moment
+        start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.time_spec(0.05)
+
+        def rx_thread_fn():
+            nonlocal rx_symbols
+            rx_symbols = server_usrp.rx_signal(num_samps=PILOT_WAVEFORM_LEN + 2000, start_time=start_time)
+            
+        def tx_thread_fn():
+            client_usrp.tx_signal(waveform=np.concatenate([np.zeros(GUARD_LEN, dtype=np.complex64), KNOWN_PILOT_WAVEFORM]), repeat=False, start_time=start_time)
+
+        rx_thread = threading.Thread(target=rx_thread_fn)
+        tx_thread = threading.Thread(target=tx_thread_fn)
+        rx_thread.start()
+        tx_thread.start()
+        tx_thread.join()
+        rx_thread.join()
+
+        if rx_symbols is not None and len(rx_symbols) >= PILOT_WAVEFORM_LEN:
+            cross_corr = np.correlate(rx_symbols, KNOWN_PILOT_WAVEFORM, mode='valid')
+            peak_idx = np.argmax(np.abs(cross_corr))
+            peak_val = cross_corr[peak_idx]
+            csi[client_idx] = peak_val / PILOT_ENERGY
+            plt.title(f"CSI for Client {client_idx}")
+            plt.plot(np.abs(cross_corr))
+            plt.vlines(peak_idx, 0, np.max(np.abs(cross_corr)), color='r')
+            plt.plot(np.abs(rx_symbols))
+            plt.show()
+            
+            print(f"  Client {client_idx}: magnitude={np.abs(csi[client_idx]):.6f}, phase={np.angle(csi[client_idx]):.6f}, power_gain={np.abs(csi[client_idx])**2:.6f}")
+
+    return csi
+
+def create_usrp_channel_estimate_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
+    """Strategy only calls (num_clients, server_round); this binds addresses."""
+    return lambda num_clients, server_round: usrp_channel_estimation(
+        num_clients, server_round, server_usrp_addr, client_usrp_addr
+    )
+
+
+def usrp_transmit_and_receive(
+    num_clients: int,
+    server_round: int,
+    server_usrp_addr: str,
+    client_usrp_addr: List[str],
+    client_signals: List[np.ndarray],
+    channel_state: np.ndarray,
+    weights: Optional[List[float]] = None,
+):
+    server_usrp = _get_usrp(server_usrp_addr)
+    if not server_usrp.rx_channels:
+        server_usrp.set_rx(freq=FREQ, samprate=1e6, gain=GAIN, channel=0, antenna="TX/RX", lo_offset=LO_OFFSET)
+    client_usrps = [_get_usrp(addr) for addr in client_usrp_addr]
+    for client_usrp in client_usrps:
+        if not client_usrp.tx_channels:
+            client_usrp.set_tx(freq=FREQ, samprate=1e6, gain=GAIN, channel=0, antenna="TX/RX", lo_offset=LO_OFFSET)
+
+    if weights is None:
+        weights = np.ones(num_clients) / num_clients
+    else:
+        weights = np.array(weights)
+        weights = weights / weights.sum()
+
+    signal_len = len(client_signals[0].flatten())
+    MAX_DAC_AMP = 0.8
+
+    # Encode: [pilot | guard | data] per client — pilot enables alignment at RX
+    encoded_signals = []
+    tx_scale = 1.0
+    for i, sig in enumerate(client_signals):
+        weighted_grads = sig.flatten() * weights[i]
+        print(f"  [Client {i}] Weighted grads: {weighted_grads[:10]}")
+        weighted_grads = np.clip(weighted_grads, -GRAD_CLIP, GRAD_CLIP)
+        csi = channel_state[i] if channel_state is not None else 1.0
+        if np.abs(csi) < 0.01:
+            print(f"  [Warning] Client {i} CSI magnitude too low ({np.abs(csi):.6f}), clamping")
+            csi = 0.01 * np.exp(1j * np.angle(csi))
+        data_waveform = USRP_X310.grad_to_wave(grads=weighted_grads, amplitude=TX_AMPLITUDE, csi=csi, sps=SPS)
+
+        data_peak = np.max(np.abs(data_waveform))
+        if data_peak > MAX_DAC_AMP:
+            tx_scale = MAX_DAC_AMP / data_peak
+            data_waveform *= tx_scale
+            print(f"  [Client {i}] DAC protection: peak {data_peak:.4f} > {MAX_DAC_AMP}, scaling by {tx_scale:.6f}")
+
+        tx_waveform = np.concatenate([
+            KNOWN_PILOT_WAVEFORM,
+            np.zeros(GUARD_LEN, dtype=np.complex64),
+            data_waveform,
+            np.zeros(GUARD_LEN, dtype=np.complex64),
+        ])
+        encoded_signals.append(tx_waveform)
+
+    tx_len = len(encoded_signals[0])
+
+    # RX captures extra to account for timing offset
+    rx_num_samps = tx_len + 4000
+
+    # Start time is 0.5 seconds after the server's PPS
+    start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.time_spec(0.5)
+    rx_symbols = None
+    rx_ready = threading.Event()
+
+    def rx_thread_fn():
+        nonlocal rx_symbols
+        rx_ready.set()
+        rx_symbols = server_usrp.rx_signal(num_samps=rx_num_samps, start_time=start_time)
+
+    def tx_thread_fn(client_idx: int):
+        rx_ready.wait()
+        client_usrps[client_idx].tx_signal(waveform=encoded_signals[client_idx], repeat=False, start_time=start_time)
+
+    rx_thread = threading.Thread(target=rx_thread_fn)
+    tx_threads = [threading.Thread(target=tx_thread_fn, args=(i,)) for i in range(num_clients)]
+    rx_thread.start()
+    for t in tx_threads:
+        t.start()
+    for t in tx_threads:
+        t.join()
+    rx_thread.join()
+
+    if rx_symbols is None:
+        raise RuntimeError(f"[Round {server_round}] RX failed: no samples received from USRP")
+
+    # Find signal start via pilot cross-correlation (spike)
+    cross_corr = np.correlate(rx_symbols, KNOWN_PILOT_WAVEFORM, mode='valid')
+    peak_idx = np.argmax(np.abs(cross_corr))
+
+    plt.plot(np.abs(cross_corr))
+    plt.plot(np.abs(rx_symbols))
+    plt.show()
+
+    rrc = USRP_X310.rrc_filter(sps=SPS).astype(np.complex64)
+    rx_filtered = np.convolve(rx_symbols, rrc, mode='same')
+
+    # Now slice the data region out of the already-filtered buffer
+    data_start = peak_idx + PILOT_WAVEFORM_LEN + GUARD_LEN
+    data_end = data_start + signal_len * SPS
+    plt.plot(np.abs(rx_filtered))
+    plt.vlines(data_start, 0, np.max(np.abs(rx_filtered)), color='r')
+    plt.vlines(data_end, 0, np.max(np.abs(rx_filtered)), color='g')
+    plt.show()
+    if data_end > len(rx_filtered):
+        data_end = len(rx_filtered)
+
+    rx_data = rx_filtered[data_start:data_end]
+    rx_grads = rx_data[::SPS] / (TX_AMPLITUDE * tx_scale * RRC_GAIN)
+
+    # Pad if we got fewer symbols than expected
+    if len(rx_grads) < signal_len:
+        rx_grads = np.concatenate([rx_grads, np.zeros(signal_len - len(rx_grads))])
+
+    return rx_grads[:signal_len]
+
+
+def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
+    def callback(client_deltas, weights, server_round, channel_state=None, **kwargs):
+        num_clients = len(client_deltas)
+        try:
+            return usrp_transmit_and_receive(
+                num_clients,
+                server_round,
+                server_usrp_addr,
+                client_usrp_addr,
+                client_deltas,
+                channel_state,
+                weights,
+            )
+        except Exception as e:
+            print(f"[Round {server_round}] USRP callback error: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+
+    return callback
