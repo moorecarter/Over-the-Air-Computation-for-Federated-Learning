@@ -190,34 +190,32 @@ class USRP_X310():
     
         return h.astype(np.float32)
     @staticmethod
-    def grad_to_wave(grads: np.ndarray, amplitude: float, csi: complex = 1.0):
-        # Normalize : Re->IQ : Upsample : RRC : waveform = RRC ⓧ Upsample
-
-        # Normalize
-        # normalized, scale = self.normalize_grads(grads=grads) 
-        
-        # Re-> IQ
+    def grad_to_wave(grads: np.ndarray, amplitude: float, csi: complex = 1.0, sps: int = 1):
+        # Re-> IQ with CSI pre-coding
         symbols = amplitude * grads.astype(np.complex64) / csi
 
+        if sps <= 1:
+            return symbols
+
         # Upsample for RRC
-        # upsampled = self._upsample(symbols=symbols, sps=sps)
+        upsampled = USRP_X310._upsample(symbols=symbols, sps=sps)
 
-        # Perform RRC
-        # rrc_filter = USRP_X310.rrc_filter(sps=sps)
-        # rrc_waveform = np.convolve(upsampled, rrc_filter, mode='same')
-
-        return symbols
+        # Perform RRC pulse shaping
+        rrc_filter = USRP_X310.rrc_filter(sps=sps)
+        return np.convolve(upsampled, rrc_filter, mode='same')
 
     @staticmethod
-    def wave_to_grad(waveform: np.ndarray, amplitude: float):
-        # Reverse RRC
-        # rrc_filter = USRP_X310.rrc_filter(sps=sps).astype(np.complex64)
-        # rx_matched = np.convolve(wave, rrc_filter[::-1], mode='same')
-                
-        # Downsamp
-        # rx_symbols = rx_matched[::sps]
-        # grads = (rx_symbols / csi) / amplitude * scale
-        grads = waveform.astype(np.complex64) / amplitude
+    def wave_to_grad(waveform: np.ndarray, amplitude: float, sps: int = 1):
+        if sps <= 1:
+            return np.real(waveform.astype(np.complex64) / amplitude)
+
+        # Reverse RRC (matched filter)
+        rrc_filter = USRP_X310.rrc_filter(sps=sps).astype(np.complex64)
+        rx_matched = np.convolve(waveform, rrc_filter[::-1], mode='same')
+
+        # Downsample
+        rx_symbols = rx_matched[::sps]
+        grads = rx_symbols.astype(np.complex64) / amplitude
 
         return np.real(grads)
 

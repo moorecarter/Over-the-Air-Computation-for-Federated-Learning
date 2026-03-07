@@ -47,9 +47,9 @@ def init_all_usrps(server_addr: str, client_addrs: List[str]):
 
     # Pre-configure RX on server, TX on clients so radios are ready before round 1
     server = _get_usrp(server_addr)
-    server.set_rx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
+    server.set_rx(freq=2.41e9, samprate=1e6, gain=20, channel=0, antenna="TX/RX", lo_offset=1e6)
     for addr in client_addrs:
-        _get_usrp(addr).set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+        _get_usrp(addr).set_tx(freq=2.41e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
     time.sleep(0.5)  # Let radios settle
 
 def usrp_channel_estimation(
@@ -63,14 +63,14 @@ def usrp_channel_estimation(
 
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
-        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
+        server_usrp.set_rx(freq=2.41e9, samprate=1e6, gain=20, channel=0, antenna="TX/RX", lo_offset=1e6)
     rx_symbols = None
 
     for client_idx in range(num_clients):
         rx_symbols = None
         client_usrp = _get_usrp(client_usrp_addr[client_idx])
         if not client_usrp.tx_channels:
-            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+            client_usrp.set_tx(freq=2.41e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
 
         # Use timed commands so RX and TX start at exactly the same moment
         start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.time_spec(0.05)
@@ -118,11 +118,11 @@ def usrp_transmit_and_receive(
 ):
     server_usrp = _get_usrp(server_usrp_addr)
     if not server_usrp.rx_channels:
-        server_usrp.set_rx(freq=2.45e9, samprate=1e6, gain=15, channel=0, antenna="TX/RX", lo_offset=1e6)
+        server_usrp.set_rx(freq=2.41e9, samprate=1e6, gain=20, channel=0, antenna="TX/RX", lo_offset=1e6)
     client_usrps = [_get_usrp(addr) for addr in client_usrp_addr]
     for client_usrp in client_usrps:
         if not client_usrp.tx_channels:
-            client_usrp.set_tx(freq=2.45e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
+            client_usrp.set_tx(freq=2.41e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
 
     if weights is None:
         weights = np.ones(num_clients) / num_clients
@@ -132,6 +132,19 @@ def usrp_transmit_and_receive(
 
     signal_len = len(client_signals[0].flatten())
 
+    # Compute adaptive amplitude: find worst-case peak across all clients
+    max_precoded = 0.0
+    for i, sig in enumerate(client_signals):
+        weighted = np.abs(sig.flatten() * weights[i])
+        csi_mag = max(np.abs(channel_state[i]), 0.01) if channel_state is not None else 1.0
+        peak = np.max(weighted) / csi_mag
+        if peak > max_precoded:
+            max_precoded = peak
+
+    TARGET_PEAK = 0.8
+    amplitude = TARGET_PEAK / max_precoded if max_precoded > 0 else TARGET_PEAK
+    print(f"  [Round {server_round}] Adaptive amplitude: {amplitude:.6f} (max_precoded: {max_precoded:.6f})")
+
     # Encode: [pilot | guard | data] per client — pilot enables alignment at RX
     encoded_signals = []
     for i, sig in enumerate(client_signals):
@@ -140,7 +153,7 @@ def usrp_transmit_and_receive(
         if np.abs(csi) < 0.01:
             print(f"  [Warning] Client {i} CSI magnitude too low ({np.abs(csi):.6f}), clamping")
             csi = 0.01 * np.exp(1j * np.angle(csi))
-        data_waveform = USRP_X310.grad_to_wave(grads=weighted_grads, amplitude=0.5, csi=csi)
+        data_waveform = USRP_X310.grad_to_wave(grads=weighted_grads, amplitude=amplitude, csi=csi)
         tx_waveform = np.concatenate([
             KNOWN_PILOT_WAVEFORM,
             np.zeros(GUARD_LEN, dtype=np.complex64),
@@ -189,7 +202,7 @@ def usrp_transmit_and_receive(
         data_end = len(rx_symbols)
 
     rx_data = rx_symbols[data_start:data_end]
-    rx_grads = USRP_X310.wave_to_grad(waveform=rx_data, amplitude=0.5)
+    rx_grads = USRP_X310.wave_to_grad(waveform=rx_data, amplitude=amplitude)
 
     # Pad if we got fewer samples than expected
     if len(rx_grads) < signal_len:

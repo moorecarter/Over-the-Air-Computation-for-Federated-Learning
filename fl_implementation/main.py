@@ -25,6 +25,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 os.environ["GRPC_VERBOSITY"] = "NONE"
 os.environ["GRPC_TRACE"] = ""
 os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "0"
+os.environ["GRPC_KEEPALIVE_TIMEOUT_MS"] = "600000"  # 10 min keepalive
 os.environ["ABSL_MIN_LOG_LEVEL"] = "4"  # Suppress abseil C++ logs (0=INFO,1=WARNING,2=ERROR,3=FATAL,4=OFF)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -223,23 +224,23 @@ def main():
     output_dir = Path(args.output_dir) / args.experiment_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Tee stdout/stderr to log file
-    log_path = output_dir / "terminal.log"
-    log_file = open(log_path, "w")
+    # # Tee stdout/stderr to log file
+    # log_path = output_dir / "terminal.log"
+    # log_file = open(log_path, "w")
 
-    class Tee:
-        def __init__(self, *streams):
-            self.streams = streams
-        def write(self, data):
-            for s in self.streams:
-                s.write(data)
-                s.flush()
-        def flush(self):
-            for s in self.streams:
-                s.flush()
+    # class Tee:
+    #     def __init__(self, *streams):
+    #         self.streams = streams
+    #     def write(self, data):
+    #         for s in self.streams:
+    #             s.write(data)
+    #             s.flush()
+    #     def flush(self):
+    #         for s in self.streams:
+    #             s.flush()
 
-    sys.stdout = Tee(sys.__stdout__, log_file)
-    sys.stderr = Tee(sys.__stderr__, log_file)
+    # sys.stdout = Tee(sys.__stdout__, log_file)
+    # sys.stderr = Tee(sys.__stderr__, log_file)
 
     # Save config
     config_path = output_dir / "config.json"
