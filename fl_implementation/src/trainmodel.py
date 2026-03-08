@@ -1,68 +1,39 @@
-import csv
-from pathlib import Path
-
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-from PIL import Image
+from medmnist import BloodMNIST
 
 
 # ── Data ──────────────────────────────────────────────────────────────
 
-class GTSRBDataset(Dataset):
-    def __init__(self, image_paths, labels, transform=None):
-        self.image_paths = image_paths
-        self.labels = labels
+class BloodMNISTWrapper(Dataset):
+    def __init__(self, split="train", img_size=28, transform=None):
+        self.dataset = BloodMNIST(split=split, download=True, size=img_size, as_rgb=True)
         self.transform = transform
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.dataset)
 
     def __getitem__(self, idx):
-        img = Image.open(self.image_paths[idx]).convert("RGB")
+        img, label = self.dataset[idx]
         if self.transform:
             img = self.transform(img)
-        return img, self.labels[idx]
+        label = torch.tensor(label.squeeze(), dtype=torch.long)
+        return img, label
 
 
-def load_train_data(data_dir):
-    paths = []
-    labels = []
-    train_dir = Path(data_dir) / "Train"
-    for folder in train_dir.iterdir():
-        if folder.is_dir():
-            label = int(folder.name)
-            for image in folder.glob("*.png"):
-                paths.append(image)
-                labels.append(label)
-    return paths, labels
-
-
-def load_test_data(data_dir):
-    paths = []
-    labels = []
-    data_dir = Path(data_dir)
-    with open(data_dir / "Test.csv") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            paths.append(data_dir / row["Path"])
-            labels.append(int(row["ClassId"]))
-    return paths, labels
-
-
-def get_transforms(split, img_size=32):
+def get_transforms(split, img_size=28):
     if split == "train":
         return transforms.Compose([
-            transforms.Resize((img_size, img_size)),
+            transforms.ToTensor(),
+            transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomRotation(15),
             transforms.ColorJitter(brightness=0.2, contrast=0.2),
-            transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
     else:
         return transforms.Compose([
-            transforms.Resize((img_size, img_size)),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
@@ -71,27 +42,26 @@ def get_transforms(split, img_size=32):
 # ── Model ─────────────────────────────────────────────────────────────
 
 class SmallCNN(nn.Module):
-    def __init__(self, num_classes=43):
+    def __init__(self, num_classes=8, img_size=28):
         super().__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 32, 3, padding=1),
-            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2),
 
             nn.Conv2d(32, 64, 3, padding=1),
-            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2),
 
             nn.Conv2d(64, 128, 3, padding=1),
-            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2),
         )
+        # After 3 MaxPool2d(2): img_size // 8
+        flat_size = 128 * (img_size // 8) ** 2
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(128 * 4 * 4, 256),
+            nn.Linear(flat_size, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(256, num_classes),
@@ -142,12 +112,11 @@ def evaluate(model, loader, criterion, device):
 # ── Main ──────────────────────────────────────────────────────────────
 
 def main():
-    data_dir = "../../dataset"
-    img_size = 32
+    img_size = 28
     batch_size = 64
-    num_epochs = 5
-    lr = 1e-3
-    num_classes = 43
+    num_epochs = 15
+    lr = 1e-4
+    num_classes = 8
 
     # Device
     if torch.cuda.is_available():
@@ -159,18 +128,10 @@ def main():
     print(f"Using device: {device}")
 
     # Load data
-    train_paths, train_labels = load_train_data(data_dir)
-    test_paths, test_labels = load_test_data(data_dir)
-    print(f"Train: {len(train_paths)} images, Test: {len(test_paths)} images, Classes: {num_classes}")
-
-    # Create datasets
-    full_train = GTSRBDataset(train_paths, train_labels, get_transforms("train", img_size))
-    test_dataset = GTSRBDataset(test_paths, test_labels, get_transforms("test", img_size))
-
-    # Split train into train/val (90/10)
-    val_size = int(0.1 * len(full_train))
-    train_size = len(full_train) - val_size
-    train_dataset, val_dataset = random_split(full_train, [train_size, val_size])
+    train_dataset = BloodMNISTWrapper("train", img_size, get_transforms("train", img_size))
+    val_dataset = BloodMNISTWrapper("val", img_size, get_transforms("test", img_size))
+    test_dataset = BloodMNISTWrapper("test", img_size, get_transforms("test", img_size))
+    print(f"Train: {len(train_dataset)}, Val: {len(val_dataset)}, Test: {len(test_dataset)}, Classes: {num_classes}")
 
     # Dataloaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -178,7 +139,7 @@ def main():
     test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
     # Model
-    model = SmallCNN(num_classes=num_classes).to(device)
+    model = SmallCNN(num_classes=num_classes, img_size=img_size).to(device)
     num_params = sum(p.numel() for p in model.parameters())
     print(f"Model parameters: {num_params:,}")
 
@@ -202,8 +163,8 @@ def main():
     print(f"\nTest accuracy: {test_acc*100:.1f}%")
 
     # Save
-    torch.save(model.state_dict(), "gtsrb_cnn.pth")
-    print("Model saved to gtsrb_cnn.pth")
+    # torch.save(model.state_dict(), "bloodmnist_cnn.pth")
+    # print("Model saved to bloodmnist_cnn.pth")
 
 
 if __name__ == "__main__":
