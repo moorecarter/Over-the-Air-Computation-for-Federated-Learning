@@ -223,6 +223,60 @@ def partition_data_pathological(
     return client_indices
 
 
+def partition_data_exclusive(
+    dataset: Dataset,
+    num_clients: int,
+    seed: int = 42,
+) -> List[List[int]]:
+    """
+    Partition data with exclusive class assignment (no overlap).
+
+    Classes are divided evenly among clients so each class belongs to
+    exactly one client. E.g. 8 classes / 3 clients = 3, 3, 2.
+
+    Args:
+        dataset: The full dataset
+        num_clients: Number of clients to partition for
+        seed: Random seed for reproducibility
+
+    Returns:
+        List of index lists, one per client
+    """
+    np.random.seed(seed)
+
+    # Get labels for all samples
+    labels = np.array([dataset[i][1].item() if isinstance(dataset[i][1], torch.Tensor)
+                       else dataset[i][1] for i in range(len(dataset))])
+    num_classes = len(np.unique(labels))
+
+    if num_clients > num_classes:
+        raise ValueError(
+            f"Cannot do exclusive partitioning: {num_clients} clients > {num_classes} classes"
+        )
+
+    # Split classes evenly across clients with no overlap
+    class_order = np.random.permutation(num_classes)
+    class_splits = np.array_split(class_order, num_clients)
+
+    # Group indices by class
+    class_indices = {i: np.where(labels == i)[0] for i in range(num_classes)}
+
+    # Assign samples to clients based on their exclusive classes
+    client_indices = []
+    for client_classes in class_splits:
+        indices = []
+        for c in client_classes:
+            indices.extend(class_indices[c].tolist())
+        np.random.shuffle(indices)
+        client_indices.append(indices)
+
+    # Print class assignments
+    for i, client_classes in enumerate(class_splits):
+        print(f"  Client {i}: classes {sorted(client_classes.tolist())}")
+
+    return client_indices
+
+
 class FederatedDataset:
     """
     Manages federated dataset partitioning and access.
@@ -278,6 +332,10 @@ class FederatedDataset:
         elif partition == "pathological":
             self.client_indices = partition_data_pathological(
                 self.train_dataset, num_clients, classes_per_client, seed
+            )
+        elif partition == "exclusive":
+            self.client_indices = partition_data_exclusive(
+                self.train_dataset, num_clients, seed
             )
         else:
             raise ValueError(f"Unknown partition: {partition}")

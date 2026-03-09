@@ -13,6 +13,8 @@ import torch.nn.functional as F
 from typing import Optional
 import timm
 
+from .trainmodel import SmallCNN
+
 
 class KANLinear(nn.Module):
     """
@@ -366,8 +368,10 @@ def create_model(
             num_classes=num_classes,
             **config,
         )
+    elif model_name == "small_cnn":
+        model = SmallCNN(num_classes=num_classes, img_size=img_size)
     else:
-        raise ValueError(f"Unknown model: {model_name}. Available: {list(model_configs.keys())}")
+        raise ValueError(f"Unknown model: {model_name}. Available: {list(model_configs.keys()) + ['small_cnn']}")
 
     return model
 

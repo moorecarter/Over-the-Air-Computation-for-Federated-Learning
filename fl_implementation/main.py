@@ -82,7 +82,7 @@ def parse_args():
         "--model",
         type=str,
         default="medvit_tiny",
-        choices=["medvit_tiny", "medvit_small", "medvit_base", "medvit_small_no_kan"],
+        choices=["medvit_tiny", "medvit_small", "medvit_base", "medvit_small_no_kan", "small_cnn"],
         help="Model architecture to use",
     )
     parser.add_argument(
@@ -130,7 +130,7 @@ def parse_args():
         "--partition",
         type=str,
         default="iid",
-        choices=["iid", "non_iid", "pathological"],
+        choices=["iid", "non_iid", "pathological", "exclusive"],
         help="Data partitioning strategy",
     )
     parser.add_argument(

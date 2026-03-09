@@ -188,9 +188,12 @@ class MedViTClient(fl.client.NumPyClient):
         local_epochs = config.get("local_epochs", self.local_epochs)
         learning_rate = config.get("learning_rate", self.learning_rate)
 
-        # Update learning rate if provided
-        for param_group in self.optimizer.param_groups:
-            param_group["lr"] = learning_rate
+        # Reset optimizer each round to avoid stale momentum from previous rounds
+        self.optimizer = torch.optim.AdamW(
+            self.model.parameters(),
+            lr=learning_rate,
+            weight_decay=0.01,
+        )
 
         # Train
         self.model.train()
