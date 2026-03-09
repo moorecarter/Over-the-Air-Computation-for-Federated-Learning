@@ -25,7 +25,6 @@ Sent during round
 {
   "state": "idle" | "training" | "transmitting" | "receiving",
   "round": 3,
-  "client_id": 0       // only present when state=training
 }
 
 
