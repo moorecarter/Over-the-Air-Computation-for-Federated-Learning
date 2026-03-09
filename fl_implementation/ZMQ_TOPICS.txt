@@ -1,0 +1,59 @@
+ZeroMQ Dashboard Topics
+========================
+
+Publisher: FL server (tcp://0.0.0.0:5555)
+Subscriber: Dashboard app (any machine on 192.168.10.x network)
+
+
+TOPIC: config
+--------------
+Sent once at startup
+{
+  "total_params": 390472,
+  "batch_size": 32,
+  "local_epochs": 3,
+  "num_clients": 3,
+  "model": "small_cnn",
+  "dataset": "bloodmnist",
+  "freq_hz": 2.41e9,
+  "sample_rate": 1e6
+}
+
+TOPIC: status
+--------------
+Sent during round
+{
+  "state": "idle" | "training" | "transmitting" | "receiving",
+  "round": 3,
+  "client_id": 0       // only present when state=training
+}
+
+
+TOPIC: round
+--------------
+Sent at end of round (multipart ZMQ message)
+Frame 0: "round"                          (topic string)
+Frame 1: JSON metadata
+{
+  "round": 3,
+  "accuracy": 0.826,
+  "loss": 0.54,
+  "tx_len": 390792,
+  "rx_len": 394792
+}
+Frame 2: tx_buffer (complex64 bytes)      -- raw TX waveform sent by clients
+Frame 3: rx_buffer (complex64 bytes)      -- raw RX waveform received at server
+
+Subscriber reconstructs with:
+  tx = np.frombuffer(frame2, dtype=np.complex64)
+  rx = np.frombuffer(frame3, dtype=np.complex64)
+
+
+Integration Points
+--------------------
+- config               -> server.py: once at startup, before round 1
+- status "training"     -> client.py: start of fit()
+- status "transmitting" -> usrp_txrx.py: before tx_signal()
+- status "receiving"    -> usrp_txrx.py: before rx_signal()
+- status "idle"         -> server.py: after aggregation
+- round metrics         -> server.py: after evaluate_fn()
