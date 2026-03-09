@@ -67,7 +67,8 @@ for logger_name in _loggers_to_suppress:
 from src.data import FederatedDataset
 from src.client import create_client_fn
 from src.server import create_server_strategy
-from src.model import create_model
+from src.model import create_model, count_parameters
+from src.zmq_publisher import ZMQPublisher
 
 
 def parse_args():
@@ -121,7 +122,7 @@ def parse_args():
     parser.add_argument(
         "--learning-rate",
         type=float,
-        default=1e-3,
+        default=1e-4,
         help="Learning rate",
     )
 
@@ -251,8 +252,21 @@ def main():
         num_classes=8,  # BloodMNIST has 8 classes
         img_size=args.img_size,
     )
-    # print(f"Model: {args.model} ({count_parameters(model):,} parameters)")
+    total_params = count_parameters(model)
     del model  # Free memory
+
+    # Start ZMQ publisher and send config once
+    zmq_pub = ZMQPublisher(port=5555)
+    time.sleep(2)  # Let PUB socket bind before sending
+    zmq_pub.send_config(
+        total_params=total_params,
+        batch_size=args.batch_size,
+        local_epochs=args.local_epochs,
+        num_clients=args.num_clients,
+        model=args.model,
+        dataset="bloodmnist",
+    )
+    print("Sent to config topic")
 
     # Create federated dataset
     fed_dataset = FederatedDataset(
@@ -359,6 +373,8 @@ def main():
         print(f"\nFinal: {init_acc*100:.1f}% -> {final_acc*100:.1f}% (+{improvement*100:.1f}%)")
 
     print(f"Saved to: {results_path}")
+
+    zmq_pub.close()
 
 
 if __name__ == "__main__":

@@ -376,7 +376,7 @@ class FedAvgOTA(FedAvg):
                 flat_deltas, weights
             )
 
-        print(f"[Round {server_round}] Server aggregated delta[0:3]: {np.array2string(aggregated_flat[:3], precision=6, separator=', ')}")
+        # print(f"[Round {server_round}] Server aggregated delta[0:3]: {np.array2string(aggregated_flat[:3], precision=6, separator=', ')}")
 
         # Unflatten back into per-layer arrays
         offset = 0

@@ -2,7 +2,7 @@ ZeroMQ Dashboard Topics
 ========================
 
 Publisher: FL server (tcp://0.0.0.0:5555)
-Subscriber: Dashboard app (any machine on 192.168.10.x network)
+Subscriber: Dashboard app (any machine on 192.168.10.3 network)
 
 
 TOPIC: config

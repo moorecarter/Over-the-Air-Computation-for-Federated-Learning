@@ -5,6 +5,7 @@ import time
 from typing import List, Optional
 import math
 import uhd.libpyuhd.types
+from .buffer_logger import log_rx_buffer
 def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
             
     if(math.gcd(N, u) != 1):
@@ -94,7 +95,7 @@ def usrp_channel_estimation(
             peak_idx = np.argmax(np.abs(cross_corr))
             peak_val = cross_corr[peak_idx]
             csi[client_idx] = peak_val / N_ZC
-            print(f"  Client {client_idx}: magnitude={np.abs(csi[client_idx]):.6f}, phase={np.angle(csi[client_idx]):.6f}, power_gain={np.abs(csi[client_idx])**2:.6f}")
+            # print(f"  Client {client_idx}: magnitude={np.abs(csi[client_idx]):.6f}, phase={np.angle(csi[client_idx]):.6f}, power_gain={np.abs(csi[client_idx])**2:.6f}")
 
     return csi
 
@@ -143,7 +144,7 @@ def usrp_transmit_and_receive(
 
     TARGET_PEAK = 0.8
     amplitude = TARGET_PEAK / max_precoded if max_precoded > 0 else TARGET_PEAK
-    print(f"  [Round {server_round}] Adaptive amplitude: {amplitude:.6f} (max_precoded: {max_precoded:.6f})")
+    # print(f"  [Round {server_round}] Adaptive amplitude: {amplitude:.6f} (max_precoded: {max_precoded:.6f})")
 
     # Encode: [pilot | guard | data] per client — pilot enables alignment at RX
     encoded_signals = []
@@ -189,6 +190,8 @@ def usrp_transmit_and_receive(
 
     if rx_symbols is None:
         raise RuntimeError(f"[Round {server_round}] RX failed: no samples received from USRP")
+
+    log_rx_buffer(rx_symbols, server_round)
 
     # Find signal start via pilot cross-correlation
     cross_corr = np.correlate(rx_symbols, KNOWN_PILOT_WAVEFORM, mode='valid')

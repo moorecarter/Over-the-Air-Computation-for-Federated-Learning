@@ -241,7 +241,7 @@ class MedViTClient(fl.client.NumPyClient):
         # Log first 3 delta values being sent
         all_flat = np.concatenate([d.flatten() for d in deltas])
         server_round = int(config.get("server_round", 0))
-        print(f"[Round {server_round}] Client {self.client_id} delta[0:3]: {np.array2string(all_flat[:3], precision=6, separator=', ')}")
+        # print(f"[Round {server_round}] Client {self.client_id} delta[0:3]: {np.array2string(all_flat[:3], precision=6, separator=', ')}")
 
         # Check if we should send deltas (for OTA) or full weights (standard FL)
         send_deltas = config.get("send_deltas", True)  # Default to deltas for OTA
