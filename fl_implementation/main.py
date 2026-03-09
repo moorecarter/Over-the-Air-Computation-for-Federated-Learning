@@ -263,6 +263,7 @@ def main():
         batch_size=args.batch_size,
         local_epochs=args.local_epochs,
         num_clients=args.num_clients,
+        num_rounds=args.num_rounds,
         model=args.model,
         dataset="bloodmnist",
     )
@@ -306,6 +307,7 @@ def main():
         local_epochs=args.local_epochs,
         learning_rate=args.learning_rate,
     )
+    strategy.zmq_pub = zmq_pub
 
     # Run Training
 

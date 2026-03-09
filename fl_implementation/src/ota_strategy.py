@@ -300,6 +300,10 @@ class FedAvgOTA(FedAvg):
         self.channel_estimate_callback = channel_estimate_callback
         # USRP callback for real OTA transmission
         self.usrp_callback = usrp_callback
+        # ZMQ publisher for status telemetry
+        self.zmq_pub = None
+        # Last channel estimation results (for metrics publishing)
+        self._last_channel_info = None
 
         # Store global parameters (updated each round)
         self._global_parameters: Optional[List[np.ndarray]] = None
@@ -327,6 +331,10 @@ class FedAvgOTA(FedAvg):
         # Check for failures
         if not self.accept_failures and failures:
             return None, {}
+
+        # Publish "training" status (clients just finished training)
+        if self.zmq_pub:
+            self.zmq_pub.send_status("training", server_round)
 
         # Extract deltas and sample counts from clients
         client_results = [
@@ -357,10 +365,15 @@ class FedAvgOTA(FedAvg):
             ])
             flat_deltas.append(flat)
 
+        if self.zmq_pub:
+            self.zmq_pub.send_status("transmitting", server_round)
+        
         # Channel estimation AFTER flattening, right before transmission (minimizes CSI drift)
-        channel_state: List[np.complex64] = None
+        # Returns dict: {"csi": np.array, "time_offsets_ns": list, "snr_db": list}
+        channel_state = None
         if self.channel_estimate_callback is not None:
             channel_state = self.channel_estimate_callback(num_clients, server_round)
+            self._last_channel_info = channel_state
 
         if self.usrp_callback is not None:
             # === REAL OTA: single USRP transmission per round ===
@@ -391,6 +404,10 @@ class FedAvgOTA(FedAvg):
 
         # Update stored global parameters
         self._global_parameters = aggregated_ndarrays
+
+        # Publish "writeback" — server sends updated global model to clients
+        if self.zmq_pub:
+            self.zmq_pub.send_status("writeback", server_round)
 
         # Convert back to Parameters
         parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)

@@ -13,6 +13,7 @@ Sent once at startup
   "batch_size": 32,
   "local_epochs": 3,
   "num_clients": 3,
+  "num_rounds": 50,
   "model": "small_cnn",
   "dataset": "bloodmnist",
   "freq_hz": 2.41e9,

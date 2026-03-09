@@ -62,6 +62,7 @@ def create_evaluate_fn(
     img_size: int,
     test_loader: torch.utils.data.DataLoader,
     device: str = "auto",
+    strategy=None,
 ) -> Callable:
     """
     Create a server-side evaluation function.
@@ -123,6 +124,29 @@ def create_evaluate_fn(
         accuracy = correct / total if total > 0 else 0.0
 
         print(f"[Round {server_round}] Accuracy: {accuracy*100:.2f}%")
+
+        # Publish metrics via ZMQ
+        strat = strategy[0] if isinstance(strategy, list) else strategy
+        if strat and strat.zmq_pub:
+            channel_info = strat._last_channel_info
+            csi_per_client = None
+            time_offsets_ns = None
+            snr_db = None
+            if channel_info:
+                csi_array = channel_info["csi"]
+                csi_per_client = [
+                    {"magnitude": float(np.abs(c)), "phase_deg": float(np.degrees(np.angle(c)))}
+                    for c in csi_array
+                ]
+                time_offsets_ns = channel_info["time_offsets_ns"]
+                snr_db = channel_info["snr_db"]
+            strat.zmq_pub.send_metrics(
+                accuracy=accuracy,
+                loss=avg_loss,
+                csi_per_client=csi_per_client,
+                time_offsets_ns=time_offsets_ns,
+                snr_db=snr_db,
+            )
 
         return avg_loss, {"accuracy": accuracy}
 
@@ -244,6 +268,10 @@ def create_server_strategy(
         usrp_callback = create_usrp_transmit_and_receive_callback(server_usrp_addr, client_usrp_addrs)
 
 
+    # Use a list as a mutable holder so evaluate_fn closure can reference strategy
+    # after it's created (strategy doesn't exist yet at this point)
+    strategy_ref = [None]
+
     # Create evaluation function if test loader provided
     evaluate_fn = None
     if test_loader is not None:
@@ -253,6 +281,7 @@ def create_server_strategy(
             img_size=img_size,
             test_loader=test_loader,
             device=device,
+            strategy=strategy_ref,
         )
 
     # Create fit config function
@@ -286,5 +315,8 @@ def create_server_strategy(
         channel_estimate_callback=channel_estimate_callback,
         usrp_callback=usrp_callback,
     )
+
+    # Wire strategy into evaluate_fn closure
+    strategy_ref[0] = strategy
 
     return strategy

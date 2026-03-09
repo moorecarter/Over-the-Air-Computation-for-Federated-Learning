@@ -5,7 +5,6 @@ import time
 from typing import List, Optional
 import math
 import uhd.libpyuhd.types
-from .buffer_logger import log_rx_buffer
 def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
             
     if(math.gcd(N, u) != 1):
@@ -67,6 +66,10 @@ def usrp_channel_estimation(
         server_usrp.set_rx(freq=2.41e9, samprate=1e6, gain=20, channel=0, antenna="TX/RX", lo_offset=1e6)
     rx_symbols = None
 
+    SAMPLE_RATE = 1e6
+    peak_indices = np.zeros(num_clients, dtype=int)
+    snr_per_client = np.zeros(num_clients)
+
     for client_idx in range(num_clients):
         rx_symbols = None
         client_usrp = _get_usrp(client_usrp_addr[client_idx])
@@ -95,9 +98,24 @@ def usrp_channel_estimation(
             peak_idx = np.argmax(np.abs(cross_corr))
             peak_val = cross_corr[peak_idx]
             csi[client_idx] = peak_val / N_ZC
-            # print(f"  Client {client_idx}: magnitude={np.abs(csi[client_idx]):.6f}, phase={np.angle(csi[client_idx]):.6f}, power_gain={np.abs(csi[client_idx])**2:.6f}")
+            peak_indices[client_idx] = peak_idx
 
-    return csi
+            # SNR estimate: signal = pilot region, noise = samples before pilot
+            signal_region = rx_symbols[peak_idx:peak_idx + N_ZC]
+            noise_region = rx_symbols[:max(peak_idx, 1)]
+            signal_power = np.mean(np.abs(signal_region) ** 2)
+            noise_power = np.mean(np.abs(noise_region) ** 2)
+            if noise_power > 0:
+                snr_per_client[client_idx] = 10 * np.log10(signal_power / noise_power)
+
+    # Time offsets relative to first client (in nanoseconds)
+    time_offsets_ns = ((peak_indices - peak_indices[0]) / SAMPLE_RATE * 1e9).tolist()
+
+    return {
+        "csi": csi,
+        "time_offsets_ns": time_offsets_ns,
+        "snr_db": snr_per_client.tolist(),
+    }
 
 def create_usrp_channel_estimate_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
     """Strategy only calls (num_clients, server_round); this binds addresses."""
@@ -114,7 +132,7 @@ def usrp_transmit_and_receive(
     server_usrp_addr: str,
     client_usrp_addr: List[str],
     client_signals: List[np.ndarray],
-    channel_state: np.ndarray,
+    channel_state: dict,
     weights: Optional[List[float]] = None,
 ):
     server_usrp = _get_usrp(server_usrp_addr)
@@ -131,13 +149,14 @@ def usrp_transmit_and_receive(
         weights = np.array(weights)
         weights = weights / weights.sum()
 
+    csi_array = channel_state["csi"] if channel_state is not None else None
     signal_len = len(client_signals[0].flatten())
 
     # Compute adaptive amplitude: find worst-case peak across all clients
     max_precoded = 0.0
     for i, sig in enumerate(client_signals):
         weighted = np.abs(sig.flatten() * weights[i])
-        csi_mag = max(np.abs(channel_state[i]), 0.01) if channel_state is not None else 1.0
+        csi_mag = max(np.abs(csi_array[i]), 0.01) if csi_array is not None else 1.0
         peak = np.max(weighted) / csi_mag
         if peak > max_precoded:
             max_precoded = peak
@@ -150,7 +169,7 @@ def usrp_transmit_and_receive(
     encoded_signals = []
     for i, sig in enumerate(client_signals):
         weighted_grads = sig.flatten() * weights[i]
-        csi = channel_state[i] if channel_state is not None else 1.0
+        csi = csi_array[i] if csi_array is not None else 1.0
         if np.abs(csi) < 0.01:
             print(f"  [Warning] Client {i} CSI magnitude too low ({np.abs(csi):.6f}), clamping")
             csi = 0.01 * np.exp(1j * np.angle(csi))
@@ -190,8 +209,6 @@ def usrp_transmit_and_receive(
 
     if rx_symbols is None:
         raise RuntimeError(f"[Round {server_round}] RX failed: no samples received from USRP")
-
-    log_rx_buffer(rx_symbols, server_round)
 
     # Find signal start via pilot cross-correlation
     cross_corr = np.correlate(rx_symbols, KNOWN_PILOT_WAVEFORM, mode='valid')

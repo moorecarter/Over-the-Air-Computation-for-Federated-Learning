@@ -1,25 +1,45 @@
 """
 ZeroMQ PUB socket for streaming FL telemetry to dashboard subscribers.
 
+All sends run on a dedicated background thread so they never block
+the USRP / Flower thread.
+
 Usage:
     pub = ZMQPublisher(port=5555)
     pub.send_config({...})       # once at startup
     pub.send_status(...)         # during rounds
-    pub.send_round(...)          # end of each round
+    pub.send_metrics(...)        # end of each round
     pub.close()
 """
 
 import json
+import threading
+import queue
 import zmq
 import numpy as np
 
 
 class ZMQPublisher:
     def __init__(self, port: int = 5555):
-        self._ctx = zmq.Context()
-        self._socket = self._ctx.socket(zmq.PUB)
-        self._socket.bind(f"tcp://0.0.0.0:{port}")
-        print(f"[ZMQ] Publishing on tcp://0.0.0.0:{port}")
+        self._queue = queue.Queue()
+        self._port = port
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self):
+        ctx = zmq.Context()
+        socket = ctx.socket(zmq.PUB)
+        socket.bind(f"tcp://0.0.0.0:{self._port}")
+        print(f"[ZMQ] Publishing on tcp://0.0.0.0:{self._port}")
+
+        while True:
+            frames = self._queue.get()
+            if frames is None:
+                break
+            socket.send_multipart(frames)
+
+        socket.close()
+        ctx.term()
 
     def send_config(
         self,
@@ -27,6 +47,7 @@ class ZMQPublisher:
         batch_size: int,
         local_epochs: int,
         num_clients: int,
+        num_rounds: int,
         model: str,
         dataset: str,
         freq_hz: float = 2.41e9,
@@ -37,39 +58,35 @@ class ZMQPublisher:
             "batch_size": batch_size,
             "local_epochs": local_epochs,
             "num_clients": num_clients,
+            "num_rounds": num_rounds,
             "model": model,
             "dataset": dataset,
             "freq_hz": freq_hz,
             "sample_rate": sample_rate,
         })
-        self._socket.send_multipart([b"config", payload.encode()])
+        self._queue.put([b"config", payload.encode()])
 
-    def send_status(self, state: str, round: int, client_id: int = None):
+    def send_status(self, state: str, round: int):
         msg = {"state": state, "round": round}
-        if client_id is not None:
-            msg["client_id"] = client_id
-        self._socket.send_multipart([b"status", json.dumps(msg).encode()])
+        self._queue.put([b"status", json.dumps(msg).encode()])
 
-    def send_round(
+    def send_metrics(
         self,
-        round: int,
         accuracy: float,
         loss: float,
-        tx_buffer: np.ndarray = None,
-        rx_buffer: np.ndarray = None,
+        csi_per_client: list = None,
+        time_offsets_ns: list = None,
+        snr_db: list = None,
     ):
-        metadata = json.dumps({
-            "round": round,
+        payload = json.dumps({
             "accuracy": accuracy,
             "loss": loss,
-            "tx_len": len(tx_buffer) if tx_buffer is not None else 0,
-            "rx_len": len(rx_buffer) if rx_buffer is not None else 0,
+            "csi_per_client": csi_per_client or [],
+            "time_offsets_ns": time_offsets_ns or [],
+            "snr_db": snr_db or [],
         })
-        frames = [b"round", metadata.encode()]
-        frames.append(tx_buffer.tobytes() if tx_buffer is not None else b"")
-        frames.append(rx_buffer.tobytes() if rx_buffer is not None else b"")
-        self._socket.send_multipart(frames)
+        self._queue.put([b"metrics", payload.encode()])
 
     def close(self):
-        self._socket.close()
-        self._ctx.term()
+        self._queue.put(None)
+        self._thread.join(timeout=2)
