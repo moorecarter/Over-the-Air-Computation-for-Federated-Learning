@@ -1853,7 +1853,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 276.0]
+    coordinate: [304, 204.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_source_0

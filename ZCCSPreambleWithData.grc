@@ -63,7 +63,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 1e6
+    value: 5e6
   states:
     bus_sink: false
     bus_source: false
@@ -87,7 +87,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 2.45e9
+    value: 2.41e9
   states:
     bus_sink: false
     bus_source: false
@@ -145,7 +145,25 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1568, 600.0]
+    coordinate: [1600, 616.0]
+    rotation: 0
+    state: enabled
+- name: blocks_divide_xx_0
+  id: blocks_divide_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [576, 496.0]
     rotation: 0
     state: enabled
 - name: blocks_file_sink_0_0
@@ -165,7 +183,7 @@ blocks:
     bus_structure: null
     coordinate: [1752, 424.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -199,25 +217,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1248, 376.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_const_vxx_0_1
-  id: blocks_multiply_const_vxx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    const: 1/channel_state
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [488, 528.0]
+    coordinate: [1256, 384.0]
     rotation: 0
     state: enabled
 - name: blocks_stream_mux_0
@@ -226,7 +226,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    lengths: (255, 255)
+    lengths: (139, 139)
     maxoutbuf: '0'
     minoutbuf: '0'
     num_inputs: '2'
@@ -257,9 +257,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [896, 376.0]
+    coordinate: [888, 384.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: blocks_throttle2_1_1
   id: blocks_throttle2
   parameters:
@@ -292,7 +292,7 @@ blocks:
     repeat: 'True'
     tags: '[]'
     type: complex
-    vector: '[0.2+0j]*255'
+    vector: '[0.5+0j]*139'
     vlen: '1'
   states:
     bus_sink: false
@@ -319,9 +319,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1048, 352.0]
+    coordinate: [1056, 328.0]
     rotation: 0
-    state: disabled
+    state: enabled
+- name: digital_costas_loop_cc_0
+  id: digital_costas_loop_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    order: '1'
+    use_snr: 'False'
+    w: 2*pi/100
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1176, 800.0]
+    rotation: 0
+    state: enabled
 - name: epy_block_0
   id: epy_block
   parameters:
@@ -360,7 +378,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    length: '255'
+    length: '139'
     maxoutbuf: '0'
     minoutbuf: '0'
     root: '1'
@@ -380,7 +398,7 @@ blocks:
     _source_code: "import numpy as np\nfrom gnuradio import gr\n\nclass blk(gr.sync_block):\n\
       \    def __init__(self, root=1, length=139, threshold_ratio=0.75):\n       \
       \ gr.sync_block.__init__(\n            self,\n            name='ZC Correlator\
-      \ & Data Averager',\n            in_sig=[np.complex64],\n            out_sig=[np.complex64,\
+      \ and Data Averager',\n            in_sig=[np.complex64],\n            out_sig=[np.complex64,\
       \ np.complex64] # Port 0: ZC State, Port 1: Data Average\n        )\n      \
       \  self.root = root\n        self.length = length\n        self.threshold_ratio\
       \ = threshold_ratio\n        \n        # Latched memories\n        self.last_h\
@@ -420,15 +438,103 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     root: '1'
-    threshold_ratio: '0.6'
+    threshold_ratio: threshold
   states:
-    _io_cache: ('ZC Correlator & Data Averager', 'blk', [('root', '1'), ('length',
+    _io_cache: ('ZC Correlator and Data Averager', 'blk', [('root', '1'), ('length',
       '139'), ('threshold_ratio', '0.75')], [('0', 'complex', 1)], [('0', 'complex',
       1), ('1', 'complex', 1)], '', ['length', 'root', 'threshold_ratio'])
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1432, 360.0]
+    coordinate: [1408, 400.0]
+    rotation: 0
+    state: disabled
+- name: epy_block_3_0
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt  # Added\
+      \ for message passing\n\nclass blk(gr.sync_block):\n    def __init__(self, root=1,\
+      \ length=139, threshold_ratio=0.75):\n        gr.sync_block.__init__(\n    \
+      \        self,\n            name='ZC Correlator & Data Averager',\n        \
+      \    in_sig=[np.complex64],\n            out_sig=[np.complex64, np.complex64]\n\
+      \        )\n        self.root = root\n        self.length = length\n       \
+      \ self.threshold_ratio = threshold_ratio\n        \n        # Register the message\
+      \ output port\n        self.message_port_register_out(pmt.intern('zc_state_msg'))\n\
+      \        \n        self.last_h = 1.0 + 0.0j\n        self.last_data_avg = 1.0\
+      \ + 0.0j\n        self.is_collecting = False\n        self.samples_collected\
+      \ = 0\n        self.current_sum = 0.0 + 0.0j\n        \n        self.seq = self._generate_zc()\n\
+      \        self.set_history(self.length+1)\n\n    def _generate_zc(self):\n  \
+      \      n = np.arange(self.length)\n        if self.length % 2 == 0:\n      \
+      \      seq = np.exp(-1j * np.pi * self.root * (n ** 2) / self.length)\n    \
+      \    else:\n            seq = np.exp(-1j * np.pi * self.root * n * (n + 1) /\
+      \ self.length)\n        return seq.astype(np.complex64)\n\n    def work(self,\
+      \ input_items, output_items):\n        in_sig = input_items[0]\n        out_zc_state\
+      \ = output_items[0]\n        out_data_avg = output_items[1]\n        \n    \
+      \    corr = np.correlate(in_sig, self.seq, mode='valid')\n        chan_est_list\
+      \ = corr / self.length\n        mags = np.abs(chan_est_list)\n\n        for\
+      \ i in range(len(out_zc_state)):\n            if mags[i] >= self.threshold_ratio:\n\
+      \                self.last_h = chan_est_list[i]\n                \n        \
+      \        # --- NEW: Publish the state as a PMT message ---\n               \
+      \ # We do this only when the peak is hit to save CPU\n                self.message_port_pub(\n\
+      \                    pmt.intern('zc_state_msg'), \n                    pmt.from_complex(self.last_h)\n\
+      \                )\n                \n                self.is_collecting = True\n\
+      \                self.samples_collected = 0\n                self.current_sum\
+      \ = 0.0 + 0.0j\n            \n            if self.is_collecting:\n         \
+      \       self.current_sum += in_sig[i + self.length]\n                self.samples_collected\
+      \ += 1\n                if self.samples_collected >= self.length:\n        \
+      \            self.last_data_avg = self.current_sum / self.length\n         \
+      \           self.is_collecting = False\n            \n            out_zc_state[i]\
+      \ = self.last_h\n            out_data_avg[i] = self.last_data_avg\n        \
+      \    \n        return len(out_zc_state)\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    length: '139'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    root: '1'
+    threshold_ratio: threshold
+  states:
+    _io_cache: ('ZC Correlator & Data Averager', 'blk', [('root', '1'), ('length',
+      '139'), ('threshold_ratio', '0.75')], [('0', 'complex', 1)], [('0', 'complex',
+      1), ('1', 'complex', 1), ('zc_state_msg', 'message', 1)], '', ['length', 'root',
+      'threshold_ratio'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1416, 392.0]
+    rotation: 0
+    state: enabled
+- name: epy_block_3_0_0
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\n\nclass\
+      \ zmq_to_complex(gr.sync_block):\n    def __init__(self):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name='ZMQ Msg to Complex',\n            in_sig=None,\
+      \ # No stream input\n            out_sig=[np.complex64] # Complex stream output\n\
+      \        )\n        # Register input message port\n        self.message_port_register_in(pmt.intern('msg_in'))\n\
+      \        self.set_msg_handler(pmt.intern('msg_in'), self.handle_msg)\n     \
+      \   \n        # Initial value until first message arrives\n        self.current_val\
+      \ = 1.0 + 0.0j\n\n    def handle_msg(self, msg):\n        # Convert PMT complex\
+      \ to Python complex\n        if pmt.is_complex(msg):\n            self.current_val\
+      \ = pmt.to_complex(msg)\n        # If it comes from a ZMQ PDU source, it might\
+      \ be a pair\n        elif pmt.is_pair(msg):\n            data = pmt.cdr(msg)\n\
+      \            if pmt.is_complex(data):\n                self.current_val = pmt.to_complex(data)\n\
+      \n    def work(self, input_items, output_items):\n        # Fill the entire\
+      \ output buffer with the latest received value\n        output_items[0][:] =\
+      \ self.current_val\n        return len(output_items[0])\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('ZMQ Msg to Complex', 'zmq_to_complex', [], [('msg_in', 'message',
+      1)], [('0', 'complex', 1)], '', [])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [544, 624.0]
     rotation: 0
     state: enabled
 - name: import_0
@@ -1239,7 +1345,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: target_freq
+    center_freq0: uhd.tune_request(target_freq, lo_offset)
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -1446,7 +1552,7 @@ blocks:
     bus_structure: null
     coordinate: [800, 496.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: uhd_usrp_source_0_0
   id: uhd_usrp_source
   parameters:
@@ -1516,7 +1622,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: target_freq
+    center_freq0: uhd.tune_request(target_freq, lo_offset)
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -1880,7 +1986,41 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1128, 488.0]
+    coordinate: [1128, 492.0]
+    rotation: 0
+    state: disabled
+- name: zeromq_pub_msg_sink_0
+  id: zeromq_pub_msg_sink
+  parameters:
+    address: tcp://*:5555
+    affinity: ''
+    alias: ''
+    bind: 'True'
+    comment: ''
+    timeout: '100'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1592, 736.0]
+    rotation: 0
+    state: enabled
+- name: zeromq_sub_msg_source_0_1
+  id: zeromq_sub_msg_source
+  parameters:
+    address: tcp://127.0.0.1:5555
+    affinity: ''
+    alias: ''
+    bind: 'False'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    timeout: '100'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [272, 608.0]
     rotation: 0
     state: enabled
 
@@ -1889,25 +2029,34 @@ connections:
 - [blocks_complex_to_float_0, '1', qtgui_number_sink_1, '0']
 - [blocks_complex_to_float_0_1, '0', qtgui_number_sink_0_1, '0']
 - [blocks_complex_to_float_0_1, '1', qtgui_number_sink_1_1, '0']
+- [blocks_divide_xx_0, '0', blocks_stream_mux_0, '1']
 - [blocks_multiply_const_vxx_0, '0', blocks_throttle2_1_0_0, '0']
 - [blocks_multiply_const_vxx_0, '0', uhd_usrp_sink_0_0_0, '0']
 - [blocks_multiply_const_vxx_0_0, '0', epy_block_3, '0']
+- [blocks_multiply_const_vxx_0_0, '0', epy_block_3_0, '0']
 - [blocks_multiply_const_vxx_0_0, '0', qtgui_freq_sink_x_0_0_0_0, '0']
 - [blocks_multiply_const_vxx_0_0, '0', qtgui_time_sink_x_0_0_0_0, '0']
-- [blocks_multiply_const_vxx_0_1, '0', blocks_stream_mux_0, '1']
 - [blocks_stream_mux_0, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_stream_mux_0, '0', blocks_throttle2_1_1, '0']
 - [blocks_throttle2_1_0_0, '0', channels_channel_model_0_0_0_0_0, '0']
 - [blocks_throttle2_1_1, '0', qtgui_freq_sink_x_0_0_1, '0']
 - [blocks_throttle2_1_1, '0', qtgui_time_sink_x_0_0_1, '0']
-- [blocks_vector_source_x_0, '0', blocks_multiply_const_vxx_0_1, '0']
-- [channels_channel_model_0_0_0_0_0, '0', blocks_multiply_const_vxx_0_0, '0']
+- [blocks_vector_source_x_0, '0', blocks_divide_xx_0, '0']
+- [channels_channel_model_0_0_0_0_0, '0', digital_costas_loop_cc_0, '0']
+- [digital_costas_loop_cc_0, '0', blocks_multiply_const_vxx_0_0, '0']
 - [epy_block_0, '0', blocks_stream_mux_0, '0']
 - [epy_block_3, '0', blocks_complex_to_float_0, '0']
 - [epy_block_3, '0', blocks_file_sink_0_0, '0']
 - [epy_block_3, '0', qtgui_const_sink_x_0, '0']
 - [epy_block_3, '1', blocks_complex_to_float_0_1, '0']
-- [uhd_usrp_source_0_0, '0', blocks_multiply_const_vxx_0_0, '0']
+- [epy_block_3_0, '0', blocks_complex_to_float_0, '0']
+- [epy_block_3_0, '0', blocks_file_sink_0_0, '0']
+- [epy_block_3_0, '0', qtgui_const_sink_x_0, '0']
+- [epy_block_3_0, '1', blocks_complex_to_float_0_1, '0']
+- [epy_block_3_0, zc_state_msg, zeromq_pub_msg_sink_0, in]
+- [epy_block_3_0_0, '0', blocks_divide_xx_0, '1']
+- [uhd_usrp_source_0_0, '0', digital_costas_loop_cc_0, '0']
+- [zeromq_sub_msg_source_0_1, out, epy_block_3_0_0, msg_in]
 
 metadata:
   file_format: 1
