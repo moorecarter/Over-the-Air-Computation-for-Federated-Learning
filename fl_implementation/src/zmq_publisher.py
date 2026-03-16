@@ -75,13 +75,23 @@ class ZMQPublisher:
         accuracy: float,
         loss: float,
         csi_per_client: list = None,
+        rx_buffer: list = None,
         time_offsets_ns: list = None,
         snr_db: list = None,
     ):
+        # Normalize optional RX buffer: send magnitudes as floats
+        rx_buffer_mag = []
+        if isinstance(rx_buffer, np.ndarray):
+            rx_buffer_mag = [float(np.abs(x)) for x in rx_buffer]
+        elif rx_buffer is not None:
+            for x in rx_buffer:
+                rx_buffer_mag.append(float(np.abs(complex(x))))
+
         payload = json.dumps({
             "accuracy": accuracy,
             "loss": loss,
             "csi_per_client": csi_per_client or [],
+            "rx_buffer_mag": rx_buffer_mag,
             "time_offsets_ns": time_offsets_ns or [],
             "snr_db": snr_db or [],
         })

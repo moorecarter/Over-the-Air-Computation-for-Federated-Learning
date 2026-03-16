@@ -11,7 +11,8 @@ import base64
 #NEED TO ADD THE RX_BUFFER IMPL ON THE BACKEND SO THAT WE CAN DISPLAY THE RX_BUFFER IN THE CHART
 
 
-SERVER_IP = "10.216.218.166"
+# SERVER_IP = "10.216.218.166"
+SERVER_IP = "localhost"
 SERVER_PORT = 5555
 
 st.set_page_config(
@@ -89,6 +90,7 @@ custom_css = """
 #     {"magnitude": 0.0118, "phase_deg": 12.7},
 #     {"magnitude": 0.0121, "phase_deg": -89.1}
 #   ],
+#   "rx_buffer": [complex64],
 #   "time_offsets_ns": [0.0, 1000.0, -500.0],
 #   "snr_db": [25.3, 24.1, 26.0]
 # }
@@ -119,7 +121,7 @@ if 'metrics' not in st.session_state:
     st.session_state['metrics'] = {
         'accuracy': 0,
         'loss': 0,
-        'rx_buffer': [],
+        'rx_buffer': np.array([], dtype=np.complex64),
         'csi_per_client': [],
         'time_offsets_ns': [],
         'snr_db': [],
@@ -177,13 +179,14 @@ def zmq_listener():
             elif topic == "metrics" and st.session_state['status']['state'] != 'none':
                 print("Metrics: ", data)
 
-                # Update latest metrics snapshot
-                st.session_state['metrics']['accuracy'] = data['accuracy']
-                st.session_state['metrics']['loss'] = data['loss']
-                st.session_state['metrics']['csi_per_client'] = data['csi_per_client']
-                st.session_state['metrics']['time_offsets_ns'] = data['time_offsets_ns']
-                st.session_state['metrics']['snr_db'] = data['snr_db']
-
+                # Update latest metrics snapshot (tolerant to optional fields)
+                st.session_state['metrics']['accuracy'] = data.get('accuracy', 0.0)
+                st.session_state['metrics']['loss'] = data.get('loss', 0.0)
+                st.session_state['metrics']['csi_per_client'] = data.get('csi_per_client', []) or []
+                st.session_state['metrics']['time_offsets_ns'] = data.get('time_offsets_ns', []) or []
+                st.session_state['metrics']['snr_db'] = data.get('snr_db', []) or []
+                rx_mag = data.get('rx_buffer_mag', [])
+                st.session_state['metrics']['rx_buffer_mag'] = np.array(rx_mag, dtype=float)
                 current_round = st.session_state['status'].get('round', 0)
                 if isinstance(data, dict) and 'round' in data:
                     current_round = data['round']
@@ -275,12 +278,7 @@ def zmq_listener():
                         else pd.concat([snr_df, new_snr_df], ignore_index=True)
                     )
         except zmq.Again:
-            
             continue
-        except zmq.TimeoutError:
-            # st.error("Connection timed out. Please check the server and try again.")
-            st.session_state['status']['state'] = 'timeout'
-            break
 
 def get_video_data(video_path):
     with open(video_path, 'rb') as v_file:
@@ -315,10 +313,10 @@ with st.container(height="content", border=True, horizontal_alignment="center", 
     with center_col:
         current_state = st.session_state['status']['state']
         state_to_file = {
-            'idle': 'images/IDLE.mp4',
-            'training': 'images/TRAIN.mp4',
-            'transmitting': 'images/OTA.mp4',
-            'writeback': 'images/WRITEBACK.mp4'
+            'idle': 'images/IDLE.webp',
+            'training': 'images/TRAIN.webp',
+            'transmitting': 'images/OTA.webp',
+            'writeback': 'images/WRITEBACK.webp'
         }
         
         st.image(state_to_file.get(current_state, 'images/IDLE.webp'), width=1000)
@@ -446,14 +444,27 @@ with right_col:
                 st.caption("Global accuracy and loss aggr   egating over successive communication rounds. Accuracy is in percentage, loss is in float.")
                 
             elif metric_selector == "USRP Data Transfer":
-                rx_buffer_df = st.session_state['metrics_accum']['rx_buffer']
-                if not rx_buffer_df.empty:
-                    latest_round = rx_buffer_df['round'].max()
-                    latest_rx_buffer = rx_buffer_df[rx_buffer_df['round'] == latest_round].set_index('client')['rx_buffer']
-                    st.line_chart(latest_rx_buffer, x_label="Sample Index", color=["#00edfa"], x="sample_idx", y="magnitude") #ADD Y VALUE : NEED TO CHOOSE THE CORRECT VALUE
+                # RX buffer magnitude only
+                rx_mag = st.session_state['metrics'].get('rx_buffer_mag', np.array([]))
+
+                if isinstance(rx_mag, np.ndarray) and rx_mag.size > 0:
+                    df = pd.DataFrame(
+                        {
+                            "sample_idx": np.arange(len(rx_mag)),
+                            "magnitude": rx_mag,
+                        }
+                    )
+                    st.line_chart(
+                        df,
+                        x="sample_idx",
+                        y="magnitude",
+                        x_label="Sample Index",
+                        y_label="Magnitude",
+                        color=["#00edfa"],
+                    )
                 else:
                     st.info("Waiting for data transfer...")
-                st.caption("Per-client data transfer for the latest completed round.")
+                st.caption("Aggregated RX waveform magnitude from the USRP for the latest round.")
 
             elif metric_selector == "Channel State Information (CSI)":
                 csi_df = st.session_state['metrics_accum']['csi_per_client']

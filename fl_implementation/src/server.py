@@ -140,10 +140,14 @@ def create_evaluate_fn(
                 ]
                 time_offsets_ns = channel_info["time_offsets_ns"]
                 snr_db = channel_info["snr_db"]
+            rx_buffer = None
+            if strat.usrp_callback is not None:
+                rx_buffer = strat.usrp_callback.rx_buffer
             strat.zmq_pub.send_metrics(
                 accuracy=accuracy,
                 loss=avg_loss,
                 csi_per_client=csi_per_client,
+                rx_buffer=rx_buffer,
                 time_offsets_ns=time_offsets_ns,
                 snr_db=snr_db,
             )

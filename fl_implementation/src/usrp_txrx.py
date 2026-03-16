@@ -221,14 +221,14 @@ def usrp_transmit_and_receive(
     if data_end > len(rx_symbols):
         data_end = len(rx_symbols)
 
-    rx_data = rx_symbols[data_start:data_end]
-    rx_grads = USRP_X310.wave_to_grad(waveform=rx_data, amplitude=amplitude)
+    rx_data_for_grad = rx_symbols[data_start:data_end]
+    rx_grads = USRP_X310.wave_to_grad(waveform=rx_data_for_grad, amplitude=amplitude)
 
     # Pad if we got fewer samples than expected
     if len(rx_grads) < signal_len:
         rx_grads = np.concatenate([rx_grads, np.zeros(signal_len - len(rx_grads))])
 
-    return rx_grads[:signal_len]
+    return rx_grads[:signal_len], rx_symbols
 
 
 def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
@@ -240,7 +240,7 @@ def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp
     def callback(client_deltas, weights, server_round, channel_state=None, **kwargs):
         num_clients = len(client_deltas)
         try:
-            return usrp_transmit_and_receive(
+            aggregated_flat, rx_data = usrp_transmit_and_receive(
                 num_clients,
                 server_round,
                 server_usrp_addr,
@@ -249,10 +249,18 @@ def create_usrp_transmit_and_receive_callback(server_usrp_addr: str, client_usrp
                 channel_state,
                 weights,
             )
+            # Make RX samples available for ZMQ publishing
+            max_points = 2048
+            if rx_data is not None and len(rx_data) > 0:
+                step = max(1, len(rx_data) // max_points)
+                callback.rx_buffer = rx_data[::step]
+            return aggregated_flat
         except Exception as e:
             print(f"[Round {server_round}] USRP callback error: {e}")
             import traceback
             traceback.print_exc()
             raise
 
+    # Initialize attribute so callers can safely read it before first round
+    callback.rx_buffer = np.array([], dtype=np.complex64)
     return callback
