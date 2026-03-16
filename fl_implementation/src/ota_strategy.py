@@ -11,6 +11,7 @@ This allows testing federated learning algorithms under realistic
 OTA conditions before deploying to actual USRP hardware.
 """
 
+import time
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -335,6 +336,7 @@ class FedAvgOTA(FedAvg):
         # Publish "training" status (clients just finished training)
         if self.zmq_pub:
             self.zmq_pub.send_status("training", server_round)
+            time.sleep(2)
 
         # Extract deltas and sample counts from clients
         client_results = [
@@ -367,7 +369,8 @@ class FedAvgOTA(FedAvg):
 
         if self.zmq_pub:
             self.zmq_pub.send_status("transmitting", server_round)
-        
+            time.sleep(2)
+
         # Channel estimation AFTER flattening, right before transmission (minimizes CSI drift)
         # Returns dict: {"csi": np.array, "time_offsets_ns": list, "snr_db": list}
         channel_state = None
