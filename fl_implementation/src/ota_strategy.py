@@ -356,7 +356,7 @@ class FedAvgOTA(FedAvg):
         aggregated_ndarrays = []
         num_params = len(client_results[0][0])
 
-        # Flatten all parameter deltas per client into one vector per client (pure numpy, no RF)
+        # Flatten all parameter deltas per client into one vector per client
         param_shapes = [client_results[0][0][i].shape for i in range(num_params)]
 
         flat_deltas = []
@@ -508,41 +508,3 @@ def create_ota_strategy(
 
     return FedAvgOTA(**config)
 
-
-if __name__ == "__main__":
-    # Test channel model
-    print("Testing OTA Channel Model")
-    print("=" * 60)
-
-    # Create some fake client updates
-    np.random.seed(42)
-    num_clients = 5
-    param_shape = (100,)
-
-    # Simulated parameter updates from clients
-    client_updates = [np.random.randn(*param_shape) for _ in range(num_clients)]
-
-    # Test different channel conditions
-    for config_name in ["ideal", "good", "moderate", "challenging", "harsh"]:
-        channel = OTAChannelModel(
-            **{k: v for k, v in {
-                "ideal": dict(snr_db=100.0, fading_type="none"),
-                "good": dict(snr_db=30.0, fading_type="none"),
-                "moderate": dict(snr_db=20.0, fading_type="rician"),
-                "challenging": dict(snr_db=15.0, fading_type="rayleigh"),
-                "harsh": dict(snr_db=10.0, fading_type="rayleigh"),
-            }[config_name].items()},
-            seed=42,
-        )
-
-        # Ideal aggregation (simple average)
-        ideal_result = np.mean(client_updates, axis=0)
-
-        # OTA aggregation
-        ota_result = channel.aggregate_with_channel(client_updates)
-
-        # Compute MSE between ideal and OTA
-        mse = np.mean((ideal_result - ota_result) ** 2)
-        print(f"{config_name:12s}: MSE = {mse:.6f}")
-
-    print("\nChannel model tests complete!")

@@ -11,7 +11,6 @@ Coordinates the federated learning process:
 from typing import Dict, List, Optional, Tuple, Callable
 import torch
 import numpy as np
-
 import flwr as fl
 from flwr.common import Metrics, Scalar, ndarrays_to_parameters
 from flwr.server import ServerConfig
@@ -214,7 +213,7 @@ def get_initial_parameters(
 def create_server_strategy(
     server_usrp_addr: str,
     client_usrp_addrs: List[str],
-    model_name: str = "medvit_small",
+    model_name: str = "small_cnn",
     num_classes: int = 8,
     img_size: int = 224,
     test_loader: Optional[torch.utils.data.DataLoader] = None,

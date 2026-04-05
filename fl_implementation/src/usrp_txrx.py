@@ -5,6 +5,7 @@ import time
 from typing import List, Optional
 import math
 import uhd.libpyuhd.types
+
 def _generate_zadoff_chu(N: int, u: int, q: int = 0) -> np.ndarray:
             
     if(math.gcd(N, u) != 1):
@@ -26,11 +27,9 @@ def _get_usrp(ip_addr: str) -> USRP_X310:
         _usrp_cache[ip_addr] = USRP_X310(ip_addr=ip_addr)
     return _usrp_cache[ip_addr]
     
-#NEED TO LOOK THIS IMPL OVER 
 def init_all_usrps(server_addr: str, client_addrs: List[str]):
     """Call once at startup before any rounds."""
     all_usrps = [_get_usrp(server_addr)] + [_get_usrp(addr) for addr in client_addrs]
-    # ============================    CHANGE TO EXTERNAL WHEN OCTOCLOCK ADDED   ============================
     for u in all_usrps:
         u.set_clk(clk_source="external", time_source="external")
         while not u.usrp.get_mboard_sensor("ref_locked").to_bool():
@@ -54,7 +53,6 @@ def init_all_usrps(server_addr: str, client_addrs: List[str]):
 
 def usrp_channel_estimation(
     num_clients: int,
-    server_round: int,
     server_usrp_addr: str,
     client_usrp_addr: List[str],
 ):
@@ -120,7 +118,7 @@ def usrp_channel_estimation(
 def create_usrp_channel_estimate_callback(server_usrp_addr: str, client_usrp_addr: List[str]):
     """Strategy only calls (num_clients, server_round); this binds addresses."""
     return lambda num_clients, server_round: usrp_channel_estimation(
-        num_clients, server_round, server_usrp_addr, client_usrp_addr
+        num_clients, server_usrp_addr, client_usrp_addr
     )
 
 GUARD_LEN = 64  # Guard interval between pilot and data

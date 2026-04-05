@@ -27,7 +27,7 @@ class BloodMNISTWrapper(Dataset):
         """
         Args:
             split: One of "train", "val", "test"
-            img_size: Target image size (default 224 for ViT)
+            img_size: Target image size
             download: Whether to download dataset if not present
             transform: Optional custom transform
         """
@@ -39,7 +39,7 @@ class BloodMNISTWrapper(Dataset):
             split=split,
             download=download,
             size=size,
-            as_rgb=True,  # Convert to RGB for ViT
+            as_rgb=True, 
         )
 
         if transform is not None:
@@ -166,117 +166,6 @@ def partition_data_non_iid(
     return client_indices
 
 
-def partition_data_pathological(
-    dataset: Dataset,
-    num_clients: int,
-    classes_per_client: int = 2,
-    seed: int = 42,
-) -> List[List[int]]:
-    """
-    Partition data pathologically non-IID.
-
-    Each client only sees a limited number of classes.
-    This is a more extreme form of non-IID.
-
-    Args:
-        dataset: The full dataset
-        num_clients: Number of clients to partition for
-        classes_per_client: Number of classes each client sees
-        seed: Random seed for reproducibility
-
-    Returns:
-        List of index lists, one per client
-    """
-    np.random.seed(seed)
-
-    # Get labels for all samples
-    labels = np.array([dataset[i][1].item() if isinstance(dataset[i][1], torch.Tensor)
-                       else dataset[i][1] for i in range(len(dataset))])
-    num_classes = len(np.unique(labels))
-
-    # Group indices by class
-    class_indices = {i: np.where(labels == i)[0].tolist() for i in range(num_classes)}
-
-    # Assign classes to clients
-    client_indices = [[] for _ in range(num_clients)]
-    classes_list = list(range(num_classes))
-
-    for client_idx in range(num_clients):
-        # Select classes for this client
-        selected_classes = np.random.choice(
-            classes_list,
-            size=min(classes_per_client, num_classes),
-            replace=False,
-        )
-
-        # Get samples from selected classes
-        for class_idx in selected_classes:
-            # Take a portion of the class samples
-            samples_to_take = len(class_indices[class_idx]) // num_clients
-            if samples_to_take > 0:
-                taken = class_indices[class_idx][:samples_to_take]
-                client_indices[client_idx].extend(taken)
-                class_indices[class_idx] = class_indices[class_idx][samples_to_take:]
-
-        np.random.shuffle(client_indices[client_idx])
-
-    return client_indices
-
-
-def partition_data_exclusive(
-    dataset: Dataset,
-    num_clients: int,
-    seed: int = 42,
-) -> List[List[int]]:
-    """
-    Partition data with exclusive class assignment (no overlap).
-
-    Classes are divided evenly among clients so each class belongs to
-    exactly one client. E.g. 8 classes / 3 clients = 3, 3, 2.
-
-    Args:
-        dataset: The full dataset
-        num_clients: Number of clients to partition for
-        seed: Random seed for reproducibility
-
-    Returns:
-        List of index lists, one per client
-    """
-    np.random.seed(seed)
-
-    # Get labels for all samples
-    labels = np.array([dataset[i][1].item() if isinstance(dataset[i][1], torch.Tensor)
-                       else dataset[i][1] for i in range(len(dataset))])
-    num_classes = len(np.unique(labels))
-
-    if num_clients > num_classes:
-        raise ValueError(
-            f"Cannot do exclusive partitioning: {num_clients} clients > {num_classes} classes"
-        )
-
-    # Split classes evenly across clients with no overlap
-    class_order = np.random.permutation(num_classes)
-    class_splits = np.array_split(class_order, num_clients)
-
-    # Group indices by class
-    class_indices = {i: np.where(labels == i)[0] for i in range(num_classes)}
-
-    # Assign samples to clients based on their exclusive classes
-    client_indices = []
-    for client_classes in class_splits:
-        indices = []
-        for c in client_classes:
-            indices.extend(class_indices[c].tolist())
-        np.random.shuffle(indices)
-        client_indices.append(indices)
-
-    # Print class assignments
-    for i, client_classes in enumerate(class_splits):
-        print(f"  Client {i}: classes {sorted(client_classes.tolist())}")
-
-    return client_indices
-
-
 class FederatedDataset:
     """
     Manages federated dataset partitioning and access.
@@ -289,10 +178,9 @@ class FederatedDataset:
     def __init__(
         self,
         num_clients: int = 5,
-        partition: str = "iid",  # "iid", "non_iid", "pathological"
+        partition: str = "iid",  # "iid", "non_iid"
         alpha: float = 0.5,  # For non_iid
-        classes_per_client: int = 2,  # For pathological
-        img_size: int = 224,
+        img_size: int = 28,
         seed: int = 42,
     ):
         """
@@ -300,7 +188,6 @@ class FederatedDataset:
             num_clients: Number of clients in federation
             partition: Partitioning strategy
             alpha: Dirichlet alpha for non_iid (lower = more heterogeneous)
-            classes_per_client: For pathological partition
             img_size: Image size for transforms
             seed: Random seed for reproducibility
         """
@@ -328,14 +215,6 @@ class FederatedDataset:
         elif partition == "non_iid":
             self.client_indices = partition_data_non_iid(
                 self.train_dataset, num_clients, alpha, seed
-            )
-        elif partition == "pathological":
-            self.client_indices = partition_data_pathological(
-                self.train_dataset, num_clients, classes_per_client, seed
-            )
-        elif partition == "exclusive":
-            self.client_indices = partition_data_exclusive(
-                self.train_dataset, num_clients, seed
             )
         else:
             raise ValueError(f"Unknown partition: {partition}")
@@ -401,29 +280,3 @@ class FederatedDataset:
     def get_client_dataset_size(self, client_id: int) -> int:
         """Get the number of samples for a specific client."""
         return len(self.client_indices[client_id])
-
-
-if __name__ == "__main__":
-    # Test data loading and partitioning
-    print("=" * 60)
-    print("Testing IID partition")
-    print("=" * 60)
-    fed_iid = FederatedDataset(num_clients=5, partition="iid")
-
-    print("\n" + "=" * 60)
-    print("Testing non-IID partition (alpha=0.5)")
-    print("=" * 60)
-    fed_non_iid = FederatedDataset(num_clients=5, partition="non_iid", alpha=0.5)
-
-    print("\n" + "=" * 60)
-    print("Testing pathological partition")
-    print("=" * 60)
-    fed_path = FederatedDataset(num_clients=5, partition="pathological")
-
-    # Test dataloader
-    print("\n" + "=" * 60)
-    print("Testing dataloader")
-    print("=" * 60)
-    loader = fed_iid.get_client_dataloader(0, batch_size=4)
-    batch = next(iter(loader))
-    print(f"Batch shape: images={batch[0].shape}, labels={batch[1].shape}")

@@ -1,7 +1,7 @@
 [project]
-name = "flwr-ota-medvit"
+name = "flwr-ota-bloodmnist"
 version = "0.1.0"
-description = "Federated Learning with OTA Aggregation using MedViTV2 and BloodMNIST"
+description = "Federated Learning with OTA Aggregation using shallow CNN and BloodMNIST"
 requires-python = ">=3.9"
 dependencies = [
     "flwr[simulation]>=1.5.0",

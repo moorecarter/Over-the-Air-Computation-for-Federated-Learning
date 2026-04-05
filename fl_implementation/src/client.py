@@ -1,5 +1,5 @@
 """
-Flower client for federated learning with MedViTV2.
+Flower client for federated learning with shallow CNN.
 
 Each client:
 1. Receives global model parameters from server
@@ -27,70 +27,18 @@ logging.getLogger("flwr").setLevel(logging.CRITICAL)
 from .model import create_model, count_parameters
 from .data import FederatedDataset
 
-
-def compute_gradient_stats(initial_params: NDArrays, final_params: NDArrays) -> Dict:
+class FLClient(fl.client.NumPyClient):
     """
-    Compute statistics about the weight delta (pseudo-gradient).
-
-    In FL, clients send updated weights, not gradients directly.
-    The "gradient" here is: delta = final_weights - initial_weights
-    This represents the direction the client wants to move the model.
-    """
-    total_delta_norm = 0.0
-    total_elements = 0
-    all_deltas = []
-
-    layer_stats = []
-
-    for i, (init, final) in enumerate(zip(initial_params, final_params)):
-        delta = final - init
-
-        # Per-layer stats
-        layer_norm = np.linalg.norm(delta)
-        layer_mean = np.mean(delta)
-        layer_std = np.std(delta)
-        layer_max = np.max(np.abs(delta))
-
-        layer_stats.append({
-            "layer": i,
-            "shape": delta.shape,
-            "norm": layer_norm,
-            "mean": layer_mean,
-            "std": layer_std,
-            "max_abs": layer_max,
-        })
-
-        total_delta_norm += layer_norm ** 2
-        total_elements += delta.size
-        all_deltas.append(delta.flatten())
-
-    # Global stats
-    all_deltas = np.concatenate(all_deltas)
-    global_norm = np.sqrt(total_delta_norm)
-    global_mean = np.mean(all_deltas)
-    global_std = np.std(all_deltas)
-
-    return {
-        "global_norm": global_norm,
-        "global_mean": global_mean,
-        "global_std": global_std,
-        "num_parameters": total_elements,
-        "layer_stats": layer_stats,
-    }
-
-
-class MedViTClient(fl.client.NumPyClient):
-    """
-    Flower client for training MedViTV2 on BloodMNIST.
+    Flower client for training on BloodMNIST.
     """
 
     def __init__(
         self,
         client_id: int,
         fed_dataset: FederatedDataset,
-        model_name: str = "medvit_small",
+        model_name: str = "small_cnn",
         num_classes: int = 8,
-        img_size: int = 224,
+        img_size: int = 28,
         device: str = "auto",
         learning_rate: float = 1e-4,
         local_epochs: int = 1,
@@ -315,7 +263,7 @@ class MedViTClient(fl.client.NumPyClient):
 
 def create_client_fn(
     fed_dataset: FederatedDataset,
-    model_name: str = "medvit_small",
+    model_name: str = "small_cnn",
     num_classes: int = 8,
     img_size: int = 224,
     device: str = "auto",
@@ -330,7 +278,7 @@ def create_client_fn(
     """
 
     def client_fn(cid: str) -> fl.client.NumPyClient:
-        return MedViTClient(
+        return FLClient(
             client_id=int(cid),
             fed_dataset=fed_dataset,
             model_name=model_name,
@@ -344,40 +292,3 @@ def create_client_fn(
 
     return client_fn
 
-
-if __name__ == "__main__":
-    # Test client creation
-    print("Testing client creation...")
-
-    # Create federated dataset
-    fed_dataset = FederatedDataset(
-        num_clients=3,
-        partition="iid",
-        img_size=224,
-    )
-
-    # Create a client
-    client = MedViTClient(
-        client_id=0,
-        fed_dataset=fed_dataset,
-        model_name="medvit_tiny",  # Use tiny for testing
-        device="cpu",
-    )
-
-    # Test get_parameters
-    params = client.get_parameters(config={})
-    print(f"Number of parameter arrays: {len(params)}")
-
-    # Test set_parameters
-    client.set_parameters(params)
-    print("Parameters set successfully")
-
-    # Test a single fit round
-    print("\nTesting fit...")
-    updated_params, num_examples, metrics = client.fit(params, config={})
-    print(f"Fit complete: {num_examples} examples, metrics={metrics}")
-
-    # Test evaluate
-    print("\nTesting evaluate...")
-    loss, num_examples, metrics = client.evaluate(updated_params, config={})
-    print(f"Evaluate complete: loss={loss:.4f}, metrics={metrics}")

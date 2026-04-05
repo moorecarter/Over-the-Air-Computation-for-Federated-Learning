@@ -99,7 +99,6 @@ class USRP_X310():
             metadata = uhd.types.RXMetadata()
             recv_buffer = np.zeros((1, streamer.get_max_num_samps()), dtype=np.complex64)
             
-            # Schedule Rx of num_samps samples exactly 3 seconds from last PPS
             stream_cmd = uhd.types.StreamCMD(uhd.types.StreamMode.num_done)
             stream_cmd.num_samps = num_samps
             stream_cmd.stream_now = True if start_time is None else False

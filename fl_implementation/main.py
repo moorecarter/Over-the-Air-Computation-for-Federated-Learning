@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Federated Learning Demo with MedViTV2, BloodMNIST, and OTA Aggregation.
+Federated Learning Demo with shallow CNN, BloodMNIST, and OTA Aggregation.
 """
 
 import argparse
@@ -11,7 +11,7 @@ import sys
 import warnings
 import threading
 import time
-
+from src.model import SmallCNN
 
 
 # ============== AGGRESSIVE LOGGING SUPPRESSION ==============
@@ -74,24 +74,16 @@ from src.zmq_publisher import ZMQPublisher
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Federated Learning with MedViTV2 and OTA Aggregation",
+        description="Federated Learning with shallow CNN and OTA Aggregation",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Model configuration
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="medvit_tiny",
-        choices=["medvit_tiny", "medvit_small", "medvit_base", "medvit_small_no_kan", "small_cnn"],
-        help="Model architecture to use",
-    )
     parser.add_argument(
         "--img-size",
         type=int,
         default=28,
         choices=[28, 64, 128, 224],
-        help="Input image size (28 is fastest for demo)",
+        help="Input image size",
     )
 
     # Federated learning configuration
@@ -131,7 +123,7 @@ def parse_args():
         "--partition",
         type=str,
         default="iid",
-        choices=["iid", "non_iid", "pathological", "exclusive"],
+        choices=["iid", "non_iid"],
         help="Data partitioning strategy",
     )
     parser.add_argument(
@@ -217,7 +209,7 @@ def main():
     # Set experiment name
     if args.experiment_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        args.experiment_name = f"fl_{args.model}_{args.partition}_{args.ota_channel}_{timestamp}"
+        args.experiment_name = f"fl_{args.partition}_{args.ota_channel}_{timestamp}"
 
     print(f"FL: {args.num_clients} clients, {args.num_rounds} rounds, {args.model} ({args.img_size}px), USRP={'ON' if args.use_usrp else 'OFF'}")
 
@@ -225,33 +217,12 @@ def main():
     output_dir = Path(args.output_dir) / args.experiment_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # # Tee stdout/stderr to log file
-    # log_path = output_dir / "terminal.log"
-    # log_file = open(log_path, "w")
-
-    # class Tee:
-    #     def __init__(self, *streams):
-    #         self.streams = streams
-    #     def write(self, data):
-    #         for s in self.streams:
-    #             s.write(data)
-    #             s.flush()
-    #     def flush(self):
-    #         for s in self.streams:
-    #             s.flush()
-
-    # sys.stdout = Tee(sys.__stdout__, log_file)
-    # sys.stderr = Tee(sys.__stderr__, log_file)
-
     # Save config
     config_path = output_dir / "config.json"
     with open(config_path, "w") as f:
         json.dump(vars(args), f, indent=2)
-    model = create_model(
-        model_name=args.model,
-        num_classes=8,  # BloodMNIST has 8 classes
-        img_size=args.img_size,
-    )
+    model = SmallCNN(num_classes=8, img_size=args.img_size)
+
     total_params = count_parameters(model)
     del model  # Free memory
 
@@ -345,7 +316,6 @@ def main():
     )
 
     clients_thread.join()
-
 
 
     # Save results

@@ -1,1 +1,1 @@
-# Flower OTA MedViT Demo
+# Flower OTA BloodMNIST Demo
