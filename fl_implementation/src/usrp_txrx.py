@@ -23,6 +23,7 @@ N_ZC = len(KNOWN_PILOT)
 
 _usrp_cache = {}
 def _get_usrp(ip_addr: str) -> USRP_X310:
+    """Get a USRP object from the cache."""
     if ip_addr not in _usrp_cache:
         _usrp_cache[ip_addr] = USRP_X310(ip_addr=ip_addr)
     return _usrp_cache[ip_addr]
@@ -30,6 +31,7 @@ def _get_usrp(ip_addr: str) -> USRP_X310:
 def init_all_usrps(server_addr: str, client_addrs: List[str]):
     """Call once at startup before any rounds."""
     all_usrps = [_get_usrp(server_addr)] + [_get_usrp(addr) for addr in client_addrs]
+    # Set the clock source and time source
     for u in all_usrps:
         u.set_clk(clk_source="external", time_source="external")
         while not u.usrp.get_mboard_sensor("ref_locked").to_bool():
@@ -67,7 +69,7 @@ def usrp_channel_estimation(
     SAMPLE_RATE = 1e6
     peak_indices = np.zeros(num_clients, dtype=int)
     snr_per_client = np.zeros(num_clients)
-
+    # For each client
     for client_idx in range(num_clients):
         rx_symbols = None
         client_usrp = _get_usrp(client_usrp_addr[client_idx])
@@ -76,26 +78,35 @@ def usrp_channel_estimation(
 
         # Use timed commands so RX and TX start at exactly the same moment
         start_time = server_usrp.usrp.get_time_now() + uhd.libpyuhd.types.time_spec(0.05)
-
+        # RX thread function to receive the signal
         def rx_thread_fn():
             nonlocal rx_symbols
             rx_symbols = server_usrp.rx_signal(num_samps=256 + 2000, start_time=start_time)
-
+        # TX thread function to transmit the pilot
         def tx_thread_fn():
             client_usrp.tx_signal(waveform=KNOWN_PILOT_WAVEFORM, repeat=False, start_time=start_time)
-
+        # Create the RX and TX threads
         rx_thread = threading.Thread(target=rx_thread_fn)
         tx_thread = threading.Thread(target=tx_thread_fn)
+        # Start the RX thread
         rx_thread.start()
+        # Start the TX thread
         tx_thread.start()
+        # Join the TX thread
         tx_thread.join()
+        # Join the RX thread
         rx_thread.join()
 
         if rx_symbols is not None and len(rx_symbols) >= N_ZC:
+            # Compute the cross-correlation between the received signal and the pilot
             cross_corr = np.correlate(rx_symbols, KNOWN_PILOT_WAVEFORM, mode='valid')
+            # Find the index of the peak in the cross-correlation
             peak_idx = np.argmax(np.abs(cross_corr))
+            # Get the value of the peak
             peak_val = cross_corr[peak_idx]
+            # Compute the CSI
             csi[client_idx] = peak_val / N_ZC
+            # Store the index of the peak
             peak_indices[client_idx] = peak_idx
 
             # SNR estimate: signal = pilot region, noise = samples before pilot
@@ -140,17 +151,18 @@ def usrp_transmit_and_receive(
     for client_usrp in client_usrps:
         if not client_usrp.tx_channels:
             client_usrp.set_tx(freq=2.41e9, samprate=1e6, gain=25, channel=0, antenna="TX/RX", lo_offset=1e6)
-
+    # If weights are not provided, set them to 1/num_clients, otherwise normalize them
     if weights is None:
         weights = np.ones(num_clients) / num_clients
     else:
         weights = np.array(weights)
         weights = weights / weights.sum()
-
+    # Get the CSI array from the channel state
     csi_array = channel_state["csi"] if channel_state is not None else None
     signal_len = len(client_signals[0].flatten())
 
-    # Compute adaptive amplitude: find worst-case peak across all clients
+    # Compute adaptive amplitude: find worst-case peak across all clients to find the maximum precoded amplitude
+    # This is the maximum amplitude that can be precoded without clipping
     max_precoded = 0.0
     for i, sig in enumerate(client_signals):
         weighted = np.abs(sig.flatten() * weights[i])
@@ -165,13 +177,18 @@ def usrp_transmit_and_receive(
 
     # Encode: [pilot | guard | data] per client — pilot enables alignment at RX
     encoded_signals = []
+    # For each client
     for i, sig in enumerate(client_signals):
+        # Flatten the signal and multiply by the weight
         weighted_grads = sig.flatten() * weights[i]
+        # Get the CSI for the client
         csi = csi_array[i] if csi_array is not None else 1.0
         if np.abs(csi) < 0.01:
             print(f"  [Warning] Client {i} CSI magnitude too low ({np.abs(csi):.6f}), clamping")
             csi = 0.01 * np.exp(1j * np.angle(csi))
+        # Convert the gradients to a waveform
         data_waveform = USRP_X310.grad_to_wave(grads=weighted_grads, amplitude=amplitude, csi=csi)
+        # Concatenate the pilot, guard, and data waveforms
         tx_waveform = np.concatenate([
             KNOWN_PILOT_WAVEFORM,
             np.zeros(GUARD_LEN, dtype=np.complex64),
@@ -196,13 +213,19 @@ def usrp_transmit_and_receive(
         rx_ready.wait()
         client_usrps[client_idx].tx_signal(waveform=encoded_signals[client_idx], repeat=False, start_time=start_time)
 
+    # Create the RX and TX threads
     rx_thread = threading.Thread(target=rx_thread_fn)
+    # Create the TX threads for each client
     tx_threads = [threading.Thread(target=tx_thread_fn, args=(i,)) for i in range(num_clients)]
+    # Start the RX thread
     rx_thread.start()
+    # Start the TX threads
     for t in tx_threads:
         t.start()
+    # Join the TX threads
     for t in tx_threads:
         t.join()
+    # Join the RX thread
     rx_thread.join()
 
     if rx_symbols is None:

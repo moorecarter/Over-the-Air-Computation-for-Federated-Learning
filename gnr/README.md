@@ -13,13 +13,13 @@ Stack:
 
 ---
 
-## What’s in the box
+## What’s in the Project
 
 | Area | Where to look |
 |------|----------------|
 | FL orchestration | `fl_implementation/main.py` |
 | Flower client / server wiring | `fl_implementation/src/client.py`, `server.py` |
-| OTA aggregation (sim + USRP hooks) | `fl_implementation/src/ota_strategy.py` |
+| OTA aggregation (simulation & USRP hooks) | `fl_implementation/src/ota_strategy.py` |
 | USRP TX/RX helpers | `fl_implementation/src/usrp_x310.py`, `usrp_txrx.py` |
 | Live metrics (ZMQ + Streamlit) | `fl_implementation/src/zmq_publisher.py`, `live_dashboard/` |
 

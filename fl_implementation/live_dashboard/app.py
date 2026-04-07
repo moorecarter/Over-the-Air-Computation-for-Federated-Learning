@@ -140,23 +140,26 @@ if 'restart' not in st.session_state:
     st.session_state['restart'] = False
 
 def zmq_listener():
+    #Initialize the ZMQ context and socket
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
     socket.connect(f"tcp://{SERVER_IP}:{SERVER_PORT}")
+    #Connect to the server
     print(f"Connected to {SERVER_IP}:{SERVER_PORT}")
-    # Subscribe to all topics and filter in code so we do not
-    # silently miss messages due to an exact-prefix mismatch.
+    # Subscribe to all topics and filter 
     socket.setsockopt(zmq.SUBSCRIBE, b"")
     # Block until the initial config arrives.
-    socket.setsockopt(zmq.RCVTIMEO, -1)  # block indefinitely until first message
+    socket.setsockopt(zmq.RCVTIMEO, -1)
 
     while True:
         try:
             # Either returns a message within the timeout or raises zmq.Again
             message = socket.recv_multipart()
+            #Get the topic and the payload
             topic = message[0].decode('utf-8')
             payload = message[1]
             data = json.loads(payload.decode('utf-8'))
+            #Process the message based on the topic
             if topic == "config":
                 print("Config: ", data)
                 st.session_state['config']['total_params'] = data['total_params']
@@ -179,7 +182,7 @@ def zmq_listener():
             elif topic == "metrics" and st.session_state['status']['state'] != 'none':
                 print("Metrics: ", data)
 
-                # Update latest metrics snapshot (tolerant to optional fields)
+                # Update latest metrics snapshot
                 st.session_state['metrics']['accuracy'] = data.get('accuracy', 0.0)
                 st.session_state['metrics']['loss'] = data.get('loss', 0.0)
                 st.session_state['metrics']['csi_per_client'] = data.get('csi_per_client', []) or []
@@ -424,11 +427,10 @@ with left_col:
         st.metric(label="Max. Client Time Sync Offset", value=f"{time_sync_offset:.2f} μs")
         st.metric(label="Avg. SNR", value=f"{mean_snr:.2f} dB")
 
-# 3. Build the Right Column (Scrollable Charts)
+# 3. Build the Right Column (Charts)
 with right_col:
     st.subheader(f"📊 Live View: {metric_selector}")
     
-    # The magic happens here: a container with a fixed height becomes scrollable
     with st.container(height="content"):
         if st.session_state['status']['state'] == 'idle' and int(st.session_state['config']['num_rounds']) != int(st.session_state['status']['round']) and int(st.session_state['status']['round']) != 0:
             st.info("Waiting for data...")
@@ -493,7 +495,7 @@ with right_col:
                     st.info("Waiting for CSI estimation...")
                 st.caption("Live CSI on the complex plane across all rounds seen so far. Each point represents a client's phase and magnitude.")
 
-# Refresh cadence:
+# Refresh cadence
 
 if st.session_state['status']['state'] != 'idle':
     time.sleep(1.0)

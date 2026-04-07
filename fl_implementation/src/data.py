@@ -33,6 +33,7 @@ class BloodMNISTWrapper(Dataset):
         """
         # Load BloodMNIST with appropriate size
         # MedMNIST supports: 28, 64, 128, 224
+        # Download the dataset if not present
         size = img_size if img_size in [28, 64, 128, 224] else 224
 
         self.dataset = BloodMNIST(
@@ -41,7 +42,7 @@ class BloodMNISTWrapper(Dataset):
             size=size,
             as_rgb=True, 
         )
-
+        # Apply default transforms to data if no custom transform is provided
         if transform is not None:
             self.transform = transform
         else:
@@ -49,6 +50,7 @@ class BloodMNISTWrapper(Dataset):
 
     def _default_transform(self, img_size: int, is_train: bool) -> transforms.Compose:
         """Create default transforms for training/evaluation."""
+        # If training, apply random horizontal flip, rotation, color jitter, and normalization
         if is_train:
             return transforms.Compose([
                 transforms.ToTensor(),
@@ -61,6 +63,7 @@ class BloodMNISTWrapper(Dataset):
                 ),
             ])
         else:
+            # If evaluation, apply normalization only
             return transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize(
@@ -73,7 +76,9 @@ class BloodMNISTWrapper(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        # Get the image and label from the dataset
         img, label = self.dataset[idx]
+        # Apply the transform to the image
         img = self.transform(img)
         # BloodMNIST labels are shape (1,), squeeze to scalar
         label = torch.tensor(label.squeeze(), dtype=torch.long)
@@ -191,6 +196,7 @@ class FederatedDataset:
             img_size: Image size for transforms
             seed: Random seed for reproducibility
         """
+        # Initialize the FederatedDataset
         self.num_clients = num_clients
         self.partition = partition
         self.img_size = img_size
@@ -208,6 +214,7 @@ class FederatedDataset:
             sys.stdout = old_stdout
 
         print(f"Dataset: {len(self.train_dataset)} train, {len(self.val_dataset)} val, {len(self.test_dataset)} test")
+        # Partition the data into clients by iid or non_iid
         if partition == "iid":
             self.client_indices = partition_data_iid(
                 self.train_dataset, num_clients, seed
@@ -235,12 +242,14 @@ class FederatedDataset:
         num_workers: int = 0,
     ) -> DataLoader:
         """Get training DataLoader for a specific client."""
+        # Check if the client id is valid
         if client_id >= self.num_clients:
             raise ValueError(f"Client {client_id} does not exist")
-
+        # Get the indices for the client
         indices = self.client_indices[client_id]
+        # Create a subset of the dataset for the client
         subset = Subset(self.train_dataset, indices)
-
+        # Create a dataloader for the client
         return DataLoader(
             subset,
             batch_size=batch_size,

@@ -21,17 +21,19 @@ import numpy as np
 
 class ZMQPublisher:
     def __init__(self, port: int = 5555):
+        #Initialize the queue and the thread
         self._queue = queue.Queue()
         self._port = port
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
     def _run(self):
+        #Initialize the ZMQ context and socket
         ctx = zmq.Context()
         socket = ctx.socket(zmq.PUB)
         socket.bind(f"tcp://0.0.0.0:{self._port}")
         print(f"[ZMQ] Publishing on tcp://0.0.0.0:{self._port}")
-
+        #Run the thread
         while True:
             frames = self._queue.get()
             if frames is None:
@@ -53,6 +55,7 @@ class ZMQPublisher:
         freq_hz: float = 2.41e9,
         sample_rate: float = 1e6,
     ):
+        #Create the payload
         payload = json.dumps({
             "total_params": total_params,
             "batch_size": batch_size,
@@ -64,10 +67,13 @@ class ZMQPublisher:
             "freq_hz": freq_hz,
             "sample_rate": sample_rate,
         })
+        #Put the payload in the queue
         self._queue.put([b"config", payload.encode()])
 
     def send_status(self, state: str, round: int):
+        #Create the payload
         msg = {"state": state, "round": round}
+        #Put the payload in the queue
         self._queue.put([b"status", json.dumps(msg).encode()])
 
     def send_metrics(
@@ -87,6 +93,7 @@ class ZMQPublisher:
             for x in rx_buffer:
                 rx_buffer_mag.append(float(np.abs(complex(x))))
 
+        #Create the payload
         payload = json.dumps({
             "accuracy": accuracy,
             "loss": loss,
@@ -95,8 +102,10 @@ class ZMQPublisher:
             "time_offsets_ns": time_offsets_ns or [],
             "snr_db": snr_db or [],
         })
+        #Put the payload in the queue
         self._queue.put([b"metrics", payload.encode()])
 
     def close(self):
+        #Put None in the queue to stop the thread
         self._queue.put(None)
         self._thread.join(timeout=2)
