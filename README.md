@@ -2,7 +2,7 @@
 
 **ELEC498 — Queen’s University**
 
-Ordinary federated learning ships each client’s update to a server, then averages on the server. **Over-the-air (OTA) aggregation** is a different idea: if several radios transmit on the same frequency at the same time, the channel *sums* their signals through superposition. In principle you can get a weighted sum in one shot instead of N separate uploads. This provides some interesting points for exploring latency and bandwith improvements.
+This project explores Over-The-Air (OTA) computation for Federated Learning (FL) and how it can boost training efficiency while maintaining data privacy. Traditional federated learning requires edge-devices to transmit their local model updates to a main server which are then aggregated to update the global model. OTA computation improves this by having edge devices transmit over the same frequency band, causing their waves to superimpose in the wireless channel. This allows the aggregated signal to directly update the model which limits communication latency, computation costs, and promotes data security by aggregating updates through a wireless channel. Implementation consists of multiple Universal Software Radio Peripheral X310 (USRP) devices that will synchronously send aggregated gradient updates to a central USRP acting as the main server. The central USRP will then decode these superimposed waveforms, update the global model, and distribute back to edge-devices. Successful completion of this project is broken down into five key milestones that all have defined objectives, timelines, and testing benchmarks. These milestones are outlined as single USRP literacy, expanding to multiple with OTA communication, FL with traditional networking, integrating FL with OTA communication, and performance comparison between the two approaches.
 
 Stack:
 
@@ -22,6 +22,7 @@ Stack:
 | OTA aggregation (simulation & USRP hooks) | `fl_implementation/src/ota_strategy.py` |
 | USRP TX/RX helpers | `fl_implementation/src/usrp_x310.py`, `usrp_txrx.py` |
 | Live metrics (ZMQ + Streamlit) | `fl_implementation/src/zmq_publisher.py`, `live_dashboard/` |
+| GNU Radio Test Flowgraphs | `gnr/` |
 
 ---
 
